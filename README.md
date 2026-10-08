@@ -4,8 +4,10 @@ A macOS app for the MacMusic project: it turns music into the WAV files
 the MacMusic player imports on a Macintosh Plus (mono, 22,050 samples a
 second, 8-bit), and optionally into MP3s.
 
-**Status: Stage 0** (`Documentation/SPECIFICATION.md` §14): the project
-builds a minimal app. Conversion comes in Stages 1-3.
+**Status: Stage 1 done** (`Documentation/SPECIFICATION.md` §14): local
+files convert to MacMusic WAVs with the developer's command-line tool,
+`mmt-convert` (BUILDING.md), checked against MacMusic's own import rules
+and confirmed in MacMusic. The window comes in Stage 4.
 
 ## Building
 

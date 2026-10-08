@@ -9,6 +9,7 @@ let package = Package(
     platforms: [.macOS("26.0")],
     products: [
         .executable(name: "MacMusicTransfer", targets: ["MacMusicTransfer"]),
+        .executable(name: "mmt-convert", targets: ["mmt-convert"]),
         .library(name: "MacMusicTransferKit", targets: ["MacMusicTransferKit"]),
     ],
     targets: [
@@ -16,6 +17,8 @@ let package = Package(
         .target(name: "MacMusicTransferKit"),
         // The app: the window, and nothing the engine needs.
         .executableTarget(name: "MacMusicTransfer", dependencies: ["MacMusicTransferKit"]),
+        // A developer's tool (decision S5): one file into one MacMusic WAV.
+        .executableTarget(name: "mmt-convert", dependencies: ["MacMusicTransferKit"]),
         .testTarget(name: "MacMusicTransferKitTests", dependencies: ["MacMusicTransferKit"]),
     ]
 )

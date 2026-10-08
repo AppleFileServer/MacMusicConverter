@@ -8,9 +8,14 @@ notarisation and the bundled tools' licences need revisiting.
 
 ## Bundled tools (decision T6; from Stage 1)
 
-FFmpeg (LGPL or GPL, depending on the build) and yt-dlp (Unlicense),
-pinned and checksum-verified, copied into the bundle at build time.
-Versions, sources, checksums and licence notices to be recorded here.
+Pinned and checksum-verified, copied into the bundle at build time
+(Stage 7). Details in `~/MacPlusProjects/transfer-tools/MANIFEST.txt`
+and BUILDING.md.
+
+| Tool | Version | Licence | Notes |
+|---|---|---|---|
+| FFmpeg, ffprobe | 9.0.2 (Martin Riedl's static arm64 build) | GPL v3 (built with `--enable-gpl --enable-version3`; includes LAME) | own use: fine. Shared copies of the app would have to offer FFmpeg's source and carry its licence |
+| yt-dlp | (Stage 5) | Unlicense | |
 
 ## Making a release (Stage 7)
 

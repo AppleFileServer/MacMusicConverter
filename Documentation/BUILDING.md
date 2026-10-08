@@ -30,8 +30,34 @@ either. Naming it works:
 
 `build/` and `.build/` are not kept in the repository.
 
-## External tools (from Stage 1)
+## External tools (decisions T6, S1, S2)
 
-FFmpeg and yt-dlp: pinned versions, checksum-verified, kept outside the
-repository (decision T6). Their location, versions and how to fetch them
-will be recorded here in Stage 1.
+Kept outside the repository, in `~/MacPlusProjects/transfer-tools/`,
+with a `MANIFEST.txt` (versions, URLs, checksums, signatures):
+
+| Tool | Version | From |
+|---|---|---|
+| FFmpeg, ffprobe | 9.0.2, static, arm64 (GPL) | Martin Riedl's builds, ffmpeg.martin-riedl.de |
+| yt-dlp | (Stage 5) | |
+
+The engine finds them (`Tools.locate`) in: the folder `MMT_TOOLS_BIN`
+names; the app's `Contents/Resources/bin` (Stage 7); then
+`~/MacPlusProjects/transfer-tools/ffmpeg-9.0.2/bin`.
+
+To fetch them again:
+
+    T=~/MacPlusProjects/transfer-tools/ffmpeg-9.0.2; mkdir -p $T/zips $T/bin; cd $T/zips
+    U=https://ffmpeg.martin-riedl.de/download/macos/arm64/1789931890_9.0.2
+    for f in ffmpeg.zip ffmpeg.zip.sha256 ffprobe.zip ffprobe.zip.sha256 versions.txt; do
+        curl -fLO $U/$f; done
+    shasum -a 256 ffmpeg.zip ffprobe.zip      # must match the .sha256 files and MANIFEST.txt
+    unzip -o ffmpeg.zip -d ../bin; unzip -o ffprobe.zip -d ../bin
+    spctl -a -t install -vv ../bin/ffmpeg     # "Notarized Developer ID", Martin Riedl
+
+This build has no SoX resampler (it isn't configured with libsoxr), so
+the converter uses FFmpeg's own at high-quality settings (§18.5).
+
+## The developer's converter
+
+    swift build -c release --product mmt-convert     # with SDKROOT set, as above
+    .build/release/mmt-convert <input> <output.wav> [--title "Title"]
