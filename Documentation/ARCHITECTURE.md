@@ -24,7 +24,7 @@ as each stage adds to it.
 
 External tools run through one process runner, with argument arrays.
 
-## Now (Stage 6)
+## Now (Stage 7)
 
 | File | Does |
 |---|---|
@@ -44,6 +44,7 @@ External tools run through one process runner, with argument arrays.
 | `JobProgress` | stage and fraction (W6); FFmpeg's `-progress` read; a throttle (once a percent) |
 | `Preferences`, `OutputPreview`, `UserMessages` | what's remembered (W7); the "Saves as" names and the taken ones (W4); plain messages for every error (§11.3) |
 | `ProcessTree`, `RunningTools` | stopping a tool and its descendants; every tool running, for quitting (H2) |
+| `SelfTest` | the packaged app's `--self-test` (P5): its own tools only, a tone to both outputs, checked |
 | `Leftovers` | a crash's temporary files, cleaned at launch (H1) |
 | `YouTubeURL` | one video from a pasted address; playlists dropped (Y3) |
 | `YouTubeSource` | the yt-dlp adapter (§8.2): the only code that knows yt-dlp's arguments and output; look-up, audio retrieval with progress, error sorting (Y6); `YouTubeTools` finds yt-dlp and Deno |
@@ -70,3 +71,12 @@ only, a Xing header, bitexact.
 
 The app runs the engine in a task and shows its progress; cancelling
 cancels the task, which stops FFmpeg.
+
+The app bundle (`tools/build-app.sh`):
+
+    MacMusic Converter Utility.app/Contents/
+      MacOS/MacMusicConverter          the app (and --self-test)
+      Helpers/ffmpeg, ffprobe          FFmpeg 9.0.2
+      Helpers/yt-dlp, deno             yt-dlp 2026.08.19, Deno 2.9.7
+      Resources/THIRD-PARTY-NOTICES.md
+      Info.plist                       local.macmusic.transfer (R2), version

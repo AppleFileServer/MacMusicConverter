@@ -192,7 +192,7 @@ import Testing
         let empty = f.url("no-tools")
         try FileManager.default.createDirectory(at: empty, withIntermediateDirectories: true)
         do {
-            _ = try Tools.locate(environment: [:], resources: nil, pinned: empty)
+            _ = try Tools.locate(environment: [:], helpers: nil, pinned: empty)
             Issue.record("found tools in an empty folder")
         } catch let error as ToolsError {
             #expect(error.message.summary == "ffmpeg, which the conversion needs, couldn't be found.")

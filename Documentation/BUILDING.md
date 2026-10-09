@@ -22,6 +22,10 @@ either. Naming it works:
 
 `tools/test.sh` and `tools/build-app.sh` do this themselves.
 
+## Releases
+
+`tools/make-release.sh` (RELEASES.md).
+
 ## Commands
 
     tools/test.sh           # build and run the engine's tests
@@ -41,9 +45,10 @@ with a `MANIFEST.txt` (versions, URLs, checksums, signatures):
 | yt-dlp | 2026.08.19, `yt-dlp_macos` (Unlicense) | github.com/yt-dlp/yt-dlp releases; behind the link `converter-tools/yt-dlp` |
 | Deno | 2.9.7, aarch64 (MIT) | github.com/denoland/deno releases; behind the link `converter-tools/deno` |
 
-The engine finds them (`Tools.locate`) in: the folder `MMC_TOOLS_BIN`
-names; the app's `Contents/Resources/bin` (Stage 7); then
-`~/MacPlusProjects/converter-tools/ffmpeg-9.0.2/bin`.
+`tools/build-app.sh` copies them into the app's `Contents/Helpers` (P1),
+so the app is self-contained. The engine finds them (`Tools.locate`) in:
+the folder `MMC_TOOLS_BIN` names; the app's `Contents/Helpers`; then
+`~/MacPlusProjects/converter-tools/ffmpeg-9.0.2/bin` (development).
 
 To fetch them again:
 
@@ -61,7 +66,7 @@ updating", in the app). Never silently:
     tools/update-yt-dlp.sh      # fetches, checks the checksum, shows the version, asks
 
 The app finds yt-dlp and Deno (`YouTubeTools.locate`) in: `MMC_TOOLS_BIN`
-(`yt-dlp`, `deno`); the app's `Contents/Resources/bin`; then
+(`yt-dlp`, `deno`); the app's `Contents/Helpers`; then
 `converter-tools/yt-dlp/yt-dlp_macos` and `converter-tools/deno/deno`.
 
 This build has no SoX resampler (it isn't configured with libsoxr), so

@@ -22,6 +22,7 @@ need the pinned FFmpeg (BUILDING.md) but no network and no music files.
 | `WindowLogicTests` (8) | preferences saved, loaded and tidied; the default folder; the "Saves as" names and the taken ones (the source never asked about); FFmpeg's progress read; the throttle; progress through a real two-output job; plain messages |
 | `YouTubeTests` (12 + 1 live) | accepted and refused addresses (a playlist dropped); yt-dlp's errors sorted; progress lines; through a stand-in yt-dlp: the look-up and its arguments (no playlist, no cookies, the age workaround off, the address after "--"), a private video, a playlist refused, both outputs from one retrieval named after the video, an untitled job named after it, a retrieval error stopping the job, cancelling the download. The live test runs only when MMC_LIVE_YOUTUBE_URL is set |
 | `HardeningTests` (12) | stopping a tool stops its children; stopping a list stops them all; leftovers (old and ours only); awkward source names (a leading "-", `concat:`, quotes, emoji, backslash, a separate accent); long titles within the limits, and converting; a read-only folder; the folder and the source removed mid-job; a full disk (a 4 MB disk image): refused up front, and, with the estimate skipped, failing mid-write with no partial file; no tools found; yt-dlp's network timeout |
+| `SelfTestTests` (2) | the self-test passes with tools, and fails, saying why, without |
 | `ProcessRunnerTests` (3) | a missing tool named; arguments never parsed by a shell; cancelling stops the tool |
 | `ConversionTests` (8) | real conversions: stereo, mono and 48 kHz MP3s; low bitrate; 0.2 s; the downmix averages the channels (a right-only tone at half the level); silence stays silent and full length; a corrupt file refused, nothing left behind; a truncated MP3 converted to its real length, with a warning; an existing output and the source left untouched, no partial file left |
 
@@ -77,3 +78,34 @@ The window shows the engine's results; its logic is tested above
 10. **Closing mid-job:** the same with the window's close button.
 11. **Closing when idle:** the app quits; no question.
 12. **Licences:** Advanced, Licences… opens the notices.
+
+## The self-test (P5)
+
+    "<the app>/Contents/MacOS/MacMusicConverter" --self-test
+
+No window: finds the tools inside the app only, converts a generated
+tone to both outputs in a temporary folder, checks them, prints the
+report, and quits (0 if it passed). `tools/make-release.sh` runs it on a
+copy outside the repository.
+
+## Before a release: the owner's acceptance run (§13.5; P7)
+
+On the release's app, unzipped and dragged to Applications:
+
+1. It opens from Applications; Advanced shows FFmpeg, yt-dlp and Deno
+   inside the app (`…/MacMusic Converter Utility.app/Contents/Helpers`).
+2. **A local MP3 to a MacMusic WAV**; the WAV's details (its row) are
+   right.
+3. **Into MacMusic:** copy the WAV onto `Transfer.dsk` (or the real
+   Plus's disk), import it, play it; the title comes in.
+4. **YouTube to MP3**, with a video you may save.
+5. **The same video to both.**
+6. **Cancel** a job part-way.
+7. **A missing or invalid input:** a non-audio file; a non-YouTube
+   address.
+8. **A name already taken:** Keep Both, then Replace.
+9. **The originals unchanged:** the source files as they were.
+10. **Restart:** quit and reopen; your choices are remembered.
+
+Optional, when you next use the Plus: steps 2-3 on the real Macintosh
+Plus (outstanding since Stage 1).

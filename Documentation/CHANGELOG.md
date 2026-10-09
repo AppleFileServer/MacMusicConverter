@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0 (2026-10-09)
+
+- Stage 7, packaging: FFmpeg, ffprobe, yt-dlp and Deno inside the app
+  (Contents/Helpers), keeping their signatures: the app is
+  self-contained. `--self-test`. `tools/make-release.sh` (tests, the app,
+  the self-test outside the repository, the zip, checksums, the source,
+  the tools' manifest, the checks). Release notes.
+
 ## 0.1.0 (in development)
 
 - Renamed: the MacMusic Transfer Utility is now the **MacMusic Converter

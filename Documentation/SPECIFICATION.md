@@ -1356,3 +1356,32 @@ Checked after the rename: a clean build; 95 tests passing (twice); the
 live YouTube test passing; "Good Luck, Babe!" converted to both outputs
 with `mmc-convert`; the bundle's name, executable, identifier and
 signature; the owner's saved preferences read as before.
+
+## 18.17 Stage 7 decisions (2026-10-09, approved by the owner)
+
+- **P1, the tools inside the app:** ffmpeg, ffprobe, yt-dlp and Deno in
+  `Contents/Helpers` (Apple's place for helpers; replaces the earlier
+  "Resources/bin"), each keeping its own signature (Martin Riedl's and
+  Deno's Developer ID, yt-dlp's ad hoc), the app signed ad hoc over
+  them; `codesign --verify --deep --strict` passes. Looked for there
+  first; `converter-tools` for development builds. About 240 MB.
+- **P2, updating yt-dlp:** `tools/update-yt-dlp.sh`, then a rebuild or a
+  release; never the app changed in place.
+- **P3, the release folder:**
+  `~/MacPlusProjects/releases/MacMusic-Converter-Utility-<version>/`: the
+  zipped app, release notes, SHA256SUMS, the source (git bundle), the
+  tools' manifest, the checks.
+- **P4, the version:** 1.0, tagged v1.0 after the owner's acceptance run.
+- **P5, the self-test:** `--self-test`: no window, the app's own tools
+  only, a tone to both outputs, checked; run by the release script on a
+  copy outside the repository.
+- **P6, the environment archive:** MacMusic's archive gains
+  `converter-tools` and this repository (in the MacMusic project).
+- **P7, the acceptance run:** §13.5's list, on the release, from
+  Applications (TESTING.md); the real Plus optional.
+
+## 18.18 Stage 7 findings (2026-10-09)
+
+- **The packaged app is self-contained:** its self-test, on a copy
+  outside the repository with its own tools only, passed (both outputs
+  checked), and left nothing running.

@@ -86,24 +86,28 @@ public struct YouTubeTools: Sendable {
     public let deno: URL
     public let ffmpegFolder: URL
 
-    /// Looked for in: MMC_TOOLS_BIN; the app's Resources/bin; then
-    /// ~/MacPlusProjects/converter-tools/yt-dlp/yt-dlp_macos and deno/deno
-    /// ("current" links, which tools/update-yt-dlp.sh moves on).
+    /// Looked for in: MMC_TOOLS_BIN; inside the app, Contents/Helpers (P1);
+    /// then ~/MacPlusProjects/converter-tools/yt-dlp/yt-dlp_macos and
+    /// deno/deno ("current" links, which tools/update-yt-dlp.sh moves on);
+    /// `pinned` false skips that last (the self-test).
     public static func locate(tools: Tools,
-                              environment: [String: String] = ProcessInfo.processInfo.environment) throws -> YouTubeTools {
-        let pinned = FileManager.default.homeDirectoryForCurrentUser
+                              environment: [String: String] = ProcessInfo.processInfo.environment,
+                              helpers: URL? = Tools.bundledHelpers,
+                              pinned: Bool = true) throws -> YouTubeTools {
+        let pinnedFolder = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("MacPlusProjects/converter-tools")
         var candidates: [(URL, URL)] = []
         if let named = environment["MMC_TOOLS_BIN"], !named.isEmpty {
             let f = URL(fileURLWithPath: named)
             candidates.append((f.appendingPathComponent("yt-dlp"), f.appendingPathComponent("deno")))
         }
-        if let resources = Bundle.main.resourceURL {
-            let f = resources.appendingPathComponent("bin")
-            candidates.append((f.appendingPathComponent("yt-dlp"), f.appendingPathComponent("deno")))
+        if let helpers {
+            candidates.append((helpers.appendingPathComponent("yt-dlp"), helpers.appendingPathComponent("deno")))
         }
-        candidates.append((pinned.appendingPathComponent("yt-dlp/yt-dlp_macos"),
-                           pinned.appendingPathComponent("deno/deno")))
+        if pinned {
+            candidates.append((pinnedFolder.appendingPathComponent("yt-dlp/yt-dlp_macos"),
+                               pinnedFolder.appendingPathComponent("deno/deno")))
+        }
         let files = FileManager.default
         for (y, d) in candidates where files.isExecutableFile(atPath: y.path) && files.isExecutableFile(atPath: d.path) {
             return YouTubeTools(ytdlp: y, deno: d, ffmpegFolder: tools.ffmpeg.deletingLastPathComponent())

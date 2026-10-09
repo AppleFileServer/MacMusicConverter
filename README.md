@@ -4,7 +4,7 @@ A macOS app for the MacMusic project: it turns music into the WAV files
 the MacMusic player imports on a Macintosh Plus (mono, 22,050 samples a
 second, 8-bit), and optionally into MP3s.
 
-**Status: Stage 2 done** (`Documentation/SPECIFICATION.md` §14): the
+**Status: version 1.0 (Stage 7).** Earlier: **Stage 2 done** (`Documentation/SPECIFICATION.md` §14): the
 shared engine converts local files to MacMusic WAVs, optionally
 normalised and with long silence trimmed from the ends, through the
 developer's command-line tool, `mmc-convert` (BUILDING.md); checked
@@ -18,12 +18,19 @@ MP3 or both, type a title, and Convert. The files go to
 `~/Music/MacMusic Converter` unless you choose another folder. Then copy
 the WAV to the Mac and import it in MacMusic.
 
+## Installing
+
+From a release (`~/MacPlusProjects/releases/MacMusic-Converter-Utility-1.0/`):
+unzip the app and drag it to Applications. It carries its own tools. See
+`Documentation/RELEASE-NOTES.md`.
+
 ## Building
 
 On an Apple silicon Mac with Xcode 26:
 
     tools/test.sh
-    tools/build-app.sh
+    tools/build-app.sh            # the app, with its tools inside (from ~/MacPlusProjects/converter-tools)
+    tools/make-release.sh         # a release (RELEASES.md)
     open "build/MacMusic Converter Utility.app"
 
 Details: `Documentation/BUILDING.md`.
