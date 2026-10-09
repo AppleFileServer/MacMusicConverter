@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds "MacMusic Transfer Utility.app" in build/ (decisions T4, T8):
+# Builds "MacMusic Converter Utility.app" in build/ (decisions T4, T8):
 # the release build of the app, wrapped in a bundle with its Info.plist,
 # signed ad hoc. (Later stages also copy FFmpeg and yt-dlp in, T6.)
 #
@@ -10,15 +10,15 @@ cd "$(dirname "$0")/.."
 # xcrun's default SDK lookup fails on this Mac (BUILDING.md): name it.
 SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
 export SDKROOT
-VERSION=$(sed -n 's/.*static let string = "\(.*\)".*/\1/p' Sources/MacMusicTransferKit/Version.swift)
+VERSION=$(sed -n 's/.*static let string = "\(.*\)".*/\1/p' Sources/MacMusicConverterKit/Version.swift)
 
-swift build -c release --product MacMusicTransfer
-BIN=$(swift build -c release --show-bin-path)/MacMusicTransfer
+swift build -c release --product MacMusicConverter
+BIN=$(swift build -c release --show-bin-path)/MacMusicConverter
 
-APP="build/MacMusic Transfer Utility.app"
+APP="build/MacMusic Converter Utility.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp "$BIN" "$APP/Contents/MacOS/MacMusicTransfer"
+cp "$BIN" "$APP/Contents/MacOS/MacMusicConverter"
 sed "s/@VERSION@/$VERSION/g" Resources/Info.plist > "$APP/Contents/Info.plist"
 cp Resources/THIRD-PARTY-NOTICES.md "$APP/Contents/Resources/"
 codesign --force --sign - "$APP"

@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import MacMusicTransferKit
+@testable import MacMusicConverterKit
 
 @Suite struct MacMusicTextTests {
     @Test func plainTitleIsKept() {

@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import MacMusicTransferKit
+@testable import MacMusicConverterKit
 
 /// MP3 output and both outputs from one job (§2.3, §5.3, §13.3; M1-M7).
 @Suite struct DualOutputTests {

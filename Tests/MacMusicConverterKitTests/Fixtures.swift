@@ -1,5 +1,5 @@
 import Foundation
-@testable import MacMusicTransferKit
+@testable import MacMusicConverterKit
 
 enum FixtureError: Error { case ffmpeg(String) }
 
@@ -12,7 +12,7 @@ struct Fixtures {
     init() throws {
         tools = try Tools.locate()
         folder = FileManager.default.temporaryDirectory
-            .appendingPathComponent("mmt-tests-\(UUID().uuidString)")
+            .appendingPathComponent("mmc-tests-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     }
 

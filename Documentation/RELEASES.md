@@ -9,7 +9,7 @@ notarisation and the bundled tools' licences need revisiting.
 ## Bundled tools (decision T6; from Stage 1)
 
 Pinned and checksum-verified, copied into the bundle at build time
-(Stage 7). Details in `~/MacPlusProjects/transfer-tools/MANIFEST.txt`
+(Stage 7). Details in `~/MacPlusProjects/converter-tools/MANIFEST.txt`
 and BUILDING.md.
 
 | Tool | Version | Licence | Notes |

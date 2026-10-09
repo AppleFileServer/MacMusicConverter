@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import MacMusicTransferKit
+@testable import MacMusicConverterKit
 
 /// The validator against hand-made files, one rule of MacMusic's at a time.
 @Suite struct ValidatorTests {

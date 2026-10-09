@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import MacMusicTransferKit
+@testable import MacMusicConverterKit
 
 @Suite struct NamingTests {
     @Test func unsafeCharactersGo() {
@@ -25,7 +25,7 @@ import Testing
     }
 
     @Test func conflicts() throws {
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("mmt-naming-\(UUID().uuidString)")
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("mmc-naming-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: folder) }
         let taken = folder.appendingPathComponent("Song.wav")

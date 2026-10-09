@@ -1,16 +1,16 @@
 import Foundation
-import MacMusicTransferKit
+import MacMusicConverterKit
 
-// mmt-convert: converts one audio file into a WAV MacMusic can import
+// mmc-convert: converts one audio file into a WAV MacMusic can import
 // (decision S5; a developer's tool until the app's window does it).
 //
-//   mmt-convert <input file or YouTube address> <output folder> [--title "Title"] [--name "File name"]
+//   mmc-convert <input file or YouTube address> <output folder> [--title "Title"] [--name "File name"]
 //               [--normalise [dBFS]] [--trim [2|3]] [--wav | --mp3 | --both] [--reencode]
 //
 // A name that's taken gets the next free one ("Song 2.wav"). An MP3 from
 // an MP3 needs --reencode (decision M2).
 
-let usage = "usage: mmt-convert <input> <output folder> [--title T] [--name N] [--normalise [dBFS]] [--trim [2|3]] [--wav | --mp3 | --both] [--reencode]\n"
+let usage = "usage: mmc-convert <input> <output folder> [--title T] [--name N] [--normalise [dBFS]] [--trim [2|3]] [--wav | --mp3 | --both] [--reencode]\n"
 var args = Array(CommandLine.arguments.dropFirst())
 var options = ConversionOptions()
 var title: String?, name: String?
@@ -54,7 +54,7 @@ do {
     var youTube: (YouTubeVideo, VideoDetails, YouTubeTools)?
     if !FileManager.default.fileExists(atPath: args[0]), args[0].contains("://") || args[0].contains("youtu"),
        case .failure(let problem) = YouTubeVideo.parse(args[0]) {
-        FileHandle.standardError.write(Data("mmt-convert: \(problem.message.summary)\n".utf8))
+        FileHandle.standardError.write(Data("mmc-convert: \(problem.message.summary)\n".utf8))
         exit(1)
     }
     if !FileManager.default.fileExists(atPath: args[0]), case .success(let video) = YouTubeVideo.parse(args[0]) {
@@ -111,18 +111,18 @@ do {
     exit(result.stage == .completed ? 0 : 1)
 } catch let error as YouTubeError {
     let m = error.message
-    FileHandle.standardError.write(Data("mmt-convert: \(m.summary)\n\(m.detail ?? "")\n".utf8))
+    FileHandle.standardError.write(Data("mmc-convert: \(m.summary)\n\(m.detail ?? "")\n".utf8))
     exit(1)
 } catch ConversionError.needsReencodeConfirmation {
     FileHandle.standardError.write(Data("""
-        mmt-convert: the source is already an MP3. Making a new MP3 from it re-encodes it,
+        mmc-convert: the source is already an MP3. Making a new MP3 from it re-encodes it,
         which loses a little quality (a higher bitrate can't bring it back). To go ahead,
         add --reencode; for the MacMusic WAV alone, use --wav.
 
         """.utf8))
     exit(3)
 } catch {
-    FileHandle.standardError.write(Data("mmt-convert: \(error)\n".utf8))
+    FileHandle.standardError.write(Data("mmc-convert: \(error)\n".utf8))
     exit(1)
 }
 

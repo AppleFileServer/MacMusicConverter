@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import MacMusicTransferKit
+@testable import MacMusicConverterKit
 
 /// Real conversions through the engine, from fixtures made on the spot
 /// (§13.2), with no options: the plain conversion.

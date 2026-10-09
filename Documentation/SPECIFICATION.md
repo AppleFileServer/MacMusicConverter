@@ -1,6 +1,9 @@
 <!-- The project's requirements baseline, as given by the owner on
 2026-10-08, kept word for word below the line. Changes and decisions made
-since are recorded in §18 at the end, not edited into the text. -->
+since are recorded in §18 at the end, not edited into the text.
+The app is now the MacMusic Converter Utility (§18.16); §18.1-18.15 keep
+the names of their day (MacMusic Transfer Utility, transfer-tools,
+mmt-convert ...). -->
 
 ---
 
@@ -1314,3 +1317,42 @@ MacMusic (Mini vMac, then the real Plus).
 - **The owner's checks 9-12** (quitting and closing mid-job, closing
   when idle, Licences…): done; "no files seem left behind and it quit
   cleanly". **Stage 6's acceptance criterion is met.**
+
+## 18.16 The rename (2026-10-09, approved by the owner)
+
+The owner renamed the app from *MacMusic Transfer Utility* (T1) to
+**MacMusic Converter Utility**. Behaviour is unchanged.
+
+- **R1, the visible name:** "MacMusic Converter Utility": the `.app`
+  (`build/MacMusic Converter Utility.app`), `CFBundleName` and
+  `CFBundleDisplayName` (the Finder and the menu bar), the window's
+  title, the notices, and the current documents.
+- **R2, the bundle identifier kept:** `local.macmusic.transfer`. It is
+  never shown; keeping it means macOS treats the renamed app as the same
+  app, so the saved preferences and the window's place carry over with no
+  migration. Ad hoc signing is unaffected.
+- **R3, the code's names:** `MacMusicConverterKit` (the engine),
+  `MacMusicConverter` (the app, and its executable),
+  `MacMusicConverterKitTests`; the folders renamed with `git mv`.
+- **R4, the folders:** the repository is now
+  `~/MacPlusProjects/MacMusicConverter`, the tools
+  `~/MacPlusProjects/converter-tools` (moved; the pinned tools and their
+  "current" links unchanged); every path in the code, scripts, manifest
+  and documents updated.
+- **R5, the default save folder:** `~/Music/MacMusic Converter` (the old
+  default had never been made; the owner's own folder is unaffected).
+- **R6, the preferences key kept:** `MacMusicTransfer.preferences`, so
+  the owner's saved choices are still read; commented in the code.
+- **R7, prefixes:** temporary files `.mmc-…`, `mmc-youtube-…`,
+  `mmc-process-…`; the developer's tool `mmc-convert`; environment
+  variables `MMC_TOOLS_BIN`, `MMC_LIVE_YOUTUBE_URL`,
+  `MMC_CONVERTER_TOOLS`. The leftover cleaner also recognises the old
+  `mmt-` names, so an earlier version's crash leftovers still go.
+- **R8, history:** §1-17 (the owner's text, with its working name
+  "MacMusic Audio Converter") and §18.1-18.15 unchanged; the CHANGELOG
+  keeps its entries.
+
+Checked after the rename: a clean build; 95 tests passing (twice); the
+live YouTube test passing; "Good Luck, Babe!" converted to both outputs
+with `mmc-convert`; the bundle's name, executable, identifier and
+signature; the owner's saved preferences read as before.

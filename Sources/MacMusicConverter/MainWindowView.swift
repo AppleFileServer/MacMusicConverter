@@ -1,6 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
-import MacMusicTransferKit
+import MacMusicConverterKit
 
 struct MainWindowView: View {
     @Bindable var model: AppModel

@@ -1,6 +1,6 @@
 # Security and privacy
 
-How the MacMusic Transfer Utility treats your files, your network and
+How the MacMusic Converter Utility treats your files, your network and
 your information (SPECIFICATION.md §12; Stage 6). Each statement was
 checked against the code (2026-10-09); keep it true as the code changes.
 
@@ -37,8 +37,8 @@ checked against the code (2026-10-09); keep it true as the code changes.
   is given no network access of its own by the app.
 - **Files it reads:** the file you choose (or drop), only.
 - **Files it writes:** the outputs, in the folder you chose; while
-  working, temporary files beside them (`.mmt-….partial`, hidden) and in
-  the system's temporary folder (`mmt-youtube-…`, `mmt-process-…`), all
+  working, temporary files beside them (`.mmc-….partial`, hidden) and in
+  the system's temporary folder (`mmc-youtube-…`, `mmc-process-…`), all
   deleted when the job ends, is cancelled or fails. Anything a crash
   leaves is deleted at the next launch, once it's over an hour old (H1).
 - **What it remembers:** your choices (outputs, normalise, its target,

@@ -86,15 +86,15 @@ public struct YouTubeTools: Sendable {
     public let deno: URL
     public let ffmpegFolder: URL
 
-    /// Looked for in: MMT_TOOLS_BIN; the app's Resources/bin; then
-    /// ~/MacPlusProjects/transfer-tools/yt-dlp/yt-dlp_macos and deno/deno
+    /// Looked for in: MMC_TOOLS_BIN; the app's Resources/bin; then
+    /// ~/MacPlusProjects/converter-tools/yt-dlp/yt-dlp_macos and deno/deno
     /// ("current" links, which tools/update-yt-dlp.sh moves on).
     public static func locate(tools: Tools,
                               environment: [String: String] = ProcessInfo.processInfo.environment) throws -> YouTubeTools {
         let pinned = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("MacPlusProjects/transfer-tools")
+            .appendingPathComponent("MacPlusProjects/converter-tools")
         var candidates: [(URL, URL)] = []
-        if let named = environment["MMT_TOOLS_BIN"], !named.isEmpty {
+        if let named = environment["MMC_TOOLS_BIN"], !named.isEmpty {
             let f = URL(fileURLWithPath: named)
             candidates.append((f.appendingPathComponent("yt-dlp"), f.appendingPathComponent("deno")))
         }
@@ -170,7 +170,7 @@ public struct YouTubeSource: Sendable {
             r = try await runner.stream(tools.ytdlp, arguments: common + [
                 "-f", "bestaudio[vcodec=none]/bestaudio",
                 "--newline", "--progress-template",
-                "download:mmt-progress %(progress.downloaded_bytes)s %(progress.total_bytes)s %(progress.total_bytes_estimate)s",
+                "download:mmc-progress %(progress.downloaded_bytes)s %(progress.total_bytes)s %(progress.total_bytes_estimate)s",
                 "-o", folder.appendingPathComponent("source.%(ext)s").path,
                 "--", video.url.absoluteString,
             ]) { piece in
@@ -192,11 +192,11 @@ public struct YouTubeSource: Sendable {
         return file
     }
 
-    /// "mmt-progress <downloaded> <total> <estimate>" to a fraction;
+    /// "mmc-progress <downloaded> <total> <estimate>" to a fraction;
     /// yt-dlp writes "NA" for what it doesn't know.
     static func progressFraction(_ line: String) -> Double? {
         let parts = line.split(separator: " ")
-        guard parts.count == 4, parts[0] == "mmt-progress", let done = Double(parts[1]) else { return nil }
+        guard parts.count == 4, parts[0] == "mmc-progress", let done = Double(parts[1]) else { return nil }
         guard let total = Double(parts[2]) ?? Double(parts[3]), total > 0 else { return nil }
         return min(done / total, 1)
     }

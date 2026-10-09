@@ -7,9 +7,9 @@ as each stage adds to it.
 
 | Target | What | Depends on |
 |---|---|---|
-| `MacMusicTransferKit` | the engine: formats, jobs, sources, processing, outputs, validation; no SwiftUI (§7.2) | Foundation |
-| `MacMusicTransfer` | the SwiftUI app: windows and controls only | the engine |
-| `MacMusicTransferKitTests` | the engine's tests (Swift Testing) | the engine |
+| `MacMusicConverterKit` | the engine: formats, jobs, sources, processing, outputs, validation; no SwiftUI (§7.2) | Foundation |
+| `MacMusicConverter` | the SwiftUI app: windows and controls only | the engine |
+| `MacMusicConverterKitTests` | the engine's tests (Swift Testing) | the engine |
 
 ## The engine (planned, §7)
 
@@ -48,9 +48,9 @@ External tools run through one process runner, with argument arrays.
 | `YouTubeURL` | one video from a pasted address; playlists dropped (Y3) |
 | `YouTubeSource` | the yt-dlp adapter (§8.2): the only code that knows yt-dlp's arguments and output; look-up, audio retrieval with progress, error sorting (Y6); `YouTubeTools` finds yt-dlp and Deno |
 | `YouTubeJob` | retrieves once into a temporary folder, then runs the engine on the download; deletes it (Y2) |
-| `mmt-convert` | the developer's command-line converter (S5), with `--normalise`, `--trim`, `--wav`/`--mp3`/`--both` and `--reencode`; a YouTube address in place of a file |
+| `mmc-convert` | the developer's command-line converter (S5), with `--normalise`, `--trim`, `--wav`/`--mp3`/`--both` and `--reencode`; a YouTube address in place of a file |
 
-The app (target `MacMusicTransfer`):
+The app (target `MacMusicConverter`):
 
 | File | Does |
 |---|---|

@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import MacMusicTransferKit
+@testable import MacMusicConverterKit
 
 /// YouTube, offline (§13.4; Y8): URLs, error sorting, and the whole path
 /// through a stand-in for yt-dlp, which answers with ready-made details
@@ -66,9 +66,9 @@ import Testing
     }
 
     @Test func progressLines() {
-        #expect(YouTubeSource.progressFraction("mmt-progress 500 1000 NA") == 0.5)
-        #expect(YouTubeSource.progressFraction("mmt-progress 500 NA 2000") == 0.25)
-        #expect(YouTubeSource.progressFraction("mmt-progress 500 NA NA") == nil)
+        #expect(YouTubeSource.progressFraction("mmc-progress 500 1000 NA") == 0.5)
+        #expect(YouTubeSource.progressFraction("mmc-progress 500 NA 2000") == 0.25)
+        #expect(YouTubeSource.progressFraction("mmc-progress 500 NA NA") == nil)
         #expect(YouTubeSource.progressFraction("[download] 50%") == nil)
     }
 
@@ -102,9 +102,9 @@ import Testing
                   prev="$a"
                 done
                 out=$(echo "$out" | sed 's/%(ext)s/m4a/')
-                echo "mmt-progress 0 1000 NA"
+                echo "mmc-progress 0 1000 NA"
                 sleep \(delay)
-                echo "mmt-progress 1000 1000 NA"
+                echo "mmc-progress 1000 1000 NA"
                 cp '\(audio?.path ?? "/dev/null")' "$out"
 
                 """
@@ -177,7 +177,7 @@ import Testing
         #expect(got.list.contains { $0.stage == .retrieving && $0.fraction == 1 })
         #expect(try args().filter { $0 == "-f" }.count == 1)   // one download
         let left = try FileManager.default.contentsOfDirectory(atPath: FileManager.default.temporaryDirectory.path)
-        #expect(!left.contains { $0.hasPrefix("mmt-youtube-") && $0.contains("download") })
+        #expect(!left.contains { $0.hasPrefix("mmc-youtube-") && $0.contains("download") })
     }
 
     @Test func untitledTakesTheVideosTitleForTheName() async throws {
@@ -215,11 +215,11 @@ import Testing
         #expect(try FileManager.default.contentsOfDirectory(atPath: f.folder.path).filter { $0.hasSuffix(".wav") }.isEmpty)
     }
 
-    // MARK: Live (only when asked: MMT_LIVE_YOUTUBE_URL; §13.4)
+    // MARK: Live (only when asked: MMC_LIVE_YOUTUBE_URL; §13.4)
 
-    @Test(.enabled(if: ProcessInfo.processInfo.environment["MMT_LIVE_YOUTUBE_URL"] != nil))
+    @Test(.enabled(if: ProcessInfo.processInfo.environment["MMC_LIVE_YOUTUBE_URL"] != nil))
     func live() async throws {
-        let text = ProcessInfo.processInfo.environment["MMT_LIVE_YOUTUBE_URL"]!
+        let text = ProcessInfo.processInfo.environment["MMC_LIVE_YOUTUBE_URL"]!
         let video = try YouTubeVideo.parse(text).get()
         let tools = try YouTubeTools.locate(tools: f.tools)
         let details = try await YouTubeSource(tools: tools).lookUp(video)

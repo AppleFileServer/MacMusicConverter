@@ -7,12 +7,15 @@ import Foundation
 public enum Leftovers {
     public static let minimumAge: TimeInterval = 3_600
 
-    /// Is this one of ours? ".mmt-<uuid>.wav.partial" or ".mp3.partial" in
-    /// a save folder; "mmt-youtube-<uuid>" or "mmt-process-<uuid>" in the
-    /// temporary folder.
+    /// Is this one of ours? ".mmc-<uuid>.wav.partial" or ".mp3.partial" in
+    /// a save folder; "mmc-youtube-<uuid>" or "mmc-process-<uuid>" in the
+    /// temporary folder. Also the "mmt-" names the app used before it was
+    /// renamed (R7), so an earlier version's leftovers still go.
     public static func isOurs(_ name: String) -> Bool {
-        (name.hasPrefix(".mmt-") && name.hasSuffix(".partial"))
-            || name.hasPrefix("mmt-youtube-") || name.hasPrefix("mmt-process-")
+        ["mmc-", "mmt-"].contains { p in
+            (name.hasPrefix("." + p) && name.hasSuffix(".partial"))
+                || name.hasPrefix(p + "youtube-") || name.hasPrefix(p + "process-")
+        }
     }
 
     /// Removes our leftovers from `folders`; returns what was removed.

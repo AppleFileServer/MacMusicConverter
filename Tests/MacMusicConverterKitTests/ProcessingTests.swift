@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import MacMusicTransferKit
+@testable import MacMusicConverterKit
 
 /// The gain and trim decisions, as plain arithmetic (N2-N4).
 @Suite struct ProcessingTests {

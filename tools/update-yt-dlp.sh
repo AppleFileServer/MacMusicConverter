@@ -1,6 +1,6 @@
 #!/bin/sh
 # Updates the pinned yt-dlp (decision Y1), never silently: fetches the
-# latest release's macOS build into ~/MacPlusProjects/transfer-tools/
+# latest release's macOS build into ~/MacPlusProjects/converter-tools/
 # yt-dlp-<version>/, checks it against the release's SHA2-256SUMS, shows
 # its version, and only then, if you agree, moves the "yt-dlp" link to it.
 # The old version stays, so going back is moving the link back.
@@ -8,7 +8,7 @@
 # Usage: tools/update-yt-dlp.sh
 
 set -eu
-T=${MMT_TRANSFER_TOOLS:-$HOME/MacPlusProjects/transfer-tools}
+T=${MMC_TRANSFER_TOOLS:-$HOME/MacPlusProjects/converter-tools}
 CURRENT=$(readlink "$T/yt-dlp" 2>/dev/null || echo "(none)")
 TAG=$(curl -fsS -m 30 https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest \
       | python3 -c 'import json,sys; print(json.load(sys.stdin)["tag_name"])')

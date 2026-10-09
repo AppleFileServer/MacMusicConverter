@@ -6,22 +6,22 @@ public enum ToolsError: Error, Equatable, Sendable {
 }
 
 /// Where FFmpeg and ffprobe are (decisions T6, S1, S2). Looked for, in
-/// order: the folder named by MMT_TOOLS_BIN; the app bundle's
+/// order: the folder named by MMC_TOOLS_BIN; the app bundle's
 /// Resources/bin (from Stage 7); the developer's pinned copy,
-/// ~/MacPlusProjects/transfer-tools/ffmpeg-9.0.2/bin (BUILDING.md).
+/// ~/MacPlusProjects/converter-tools/ffmpeg-9.0.2/bin (BUILDING.md).
 public struct Tools: Sendable {
     public let ffmpeg: URL
     public let ffprobe: URL
 
     public static let pinnedFolder = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("MacPlusProjects/transfer-tools/ffmpeg-9.0.2/bin")
+        .appendingPathComponent("MacPlusProjects/converter-tools/ffmpeg-9.0.2/bin")
 
     public static func locate(environment: [String: String] = ProcessInfo.processInfo.environment,
                               resources: URL? = Bundle.main.resourceURL,
                               pinned: URL = pinnedFolder) throws -> Tools
     {
         var folders: [URL] = []
-        if let named = environment["MMT_TOOLS_BIN"], !named.isEmpty {
+        if let named = environment["MMC_TOOLS_BIN"], !named.isEmpty {
             folders.append(URL(fileURLWithPath: named))
         }
         if let resources {

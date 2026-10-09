@@ -113,7 +113,7 @@ public struct ConversionEngine: Sendable {
                                                               base: job.baseName, policy: job.conflict,
                                                               source: job.source),
                     temporary: job.outputFolder.appendingPathComponent(
-                        ".mmt-\(UUID().uuidString).\(kind == .mp3 ? "mp3" : "wav").partial"))
+                        ".mmc-\(UUID().uuidString).\(kind == .mp3 ? "mp3" : "wav").partial"))
         }
         let temporaries = pending.map(\.temporary)
         defer { for t in temporaries { try? files.removeItem(at: t) } }

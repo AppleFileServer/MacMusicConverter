@@ -10,7 +10,7 @@ extension ConversionEngine {
                     job: ConversionJob,
                     onProgress: @escaping @Sendable (JobProgress) -> Void) async throws -> JobResult {
         let files = FileManager.default
-        let folder = files.temporaryDirectory.appendingPathComponent("mmt-youtube-\(UUID().uuidString)")
+        let folder = files.temporaryDirectory.appendingPathComponent("mmc-youtube-\(UUID().uuidString)")
         try files.createDirectory(at: folder, withIntermediateDirectories: true)
         defer { try? files.removeItem(at: folder) }
 

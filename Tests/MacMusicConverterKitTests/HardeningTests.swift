@@ -1,7 +1,7 @@
 import Foundation
 import Darwin
 import Testing
-@testable import MacMusicTransferKit
+@testable import MacMusicConverterKit
 
 /// Stage 6: failures handled safely, nothing incomplete passed off as
 /// finished, nothing left running or lying about (H1-H5).
@@ -75,13 +75,15 @@ import Testing
             if old { try files.setAttributes([.modificationDate: hourAgo], ofItemAtPath: url.path) }
             return url
         }
-        let oldPartial = try make(".mmt-1234.wav.partial", old: true)
-        let newPartial = try make(".mmt-5678.mp3.partial", old: false)
-        let oldDownload = try make("mmt-youtube-abcd", old: true, folder: true)
+        let oldPartial = try make(".mmc-1234.wav.partial", old: true)
+        let newPartial = try make(".mmc-5678.mp3.partial", old: false)
+        let oldDownload = try make("mmc-youtube-abcd", old: true, folder: true)
+        let olderVersion = try make(".mmt-9abc.wav.partial", old: true)     // from before the rename
         let someoneElses = try make("song.wav.partial", old: true)
         let aSong = try make("Song.wav", old: true)
         let removed = Leftovers.clean([f.folder])
-        #expect(Set(removed.map(\.lastPathComponent)) == [oldPartial.lastPathComponent, oldDownload.lastPathComponent])
+        #expect(Set(removed.map(\.lastPathComponent))
+                == [oldPartial.lastPathComponent, oldDownload.lastPathComponent, olderVersion.lastPathComponent])
         for kept in [newPartial, someoneElses, aSong] { #expect(files.fileExists(atPath: kept.path)) }
     }
 
@@ -165,7 +167,7 @@ import Testing
         let image = f.url("small.dmg"), mount = f.url("small")
         let hdiutil = URL(fileURLWithPath: "/usr/bin/hdiutil")
         let made = try await ProcessRunner().run(hdiutil, arguments: [
-            "create", "-size", "4m", "-fs", "HFS+", "-volname", "mmt-small", "-quiet", image.path])
+            "create", "-size", "4m", "-fs", "HFS+", "-volname", "mmc-small", "-quiet", image.path])
         try #require(made.status == 0, "\(made.stderrText)")
         try FileManager.default.createDirectory(at: mount, withIntermediateDirectories: true)
         let attached = try await ProcessRunner().run(hdiutil, arguments: [

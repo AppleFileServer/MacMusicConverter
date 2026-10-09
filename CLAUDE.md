@@ -1,4 +1,4 @@
-# MacMusic Transfer Utility
+# MacMusic Converter Utility
 
 ## Project
 
@@ -15,7 +15,7 @@ match MacMusic's importer, `src/wav.c` there (§18.2).
 ## Build and test
 
     tools/test.sh          # the engine's tests (swift test)
-    tools/build-app.sh     # build/MacMusic Transfer Utility.app
+    tools/build-app.sh     # build/MacMusic Converter Utility.app
 
 See `Documentation/BUILDING.md` (this Mac needs the SDK named:
 the scripts do it).

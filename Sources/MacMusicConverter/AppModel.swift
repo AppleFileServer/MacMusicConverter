@@ -1,6 +1,6 @@
 import AppKit
 import Observation
-import MacMusicTransferKit
+import MacMusicConverterKit
 
 /// The window's state, and the running job. The decisions it relies on
 /// (names, conflicts, preferences, messages) live in the engine library,

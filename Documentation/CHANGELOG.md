@@ -2,6 +2,13 @@
 
 ## 0.1.0 (in development)
 
+- Renamed: the MacMusic Transfer Utility is now the **MacMusic Converter
+  Utility** (SPECIFICATION.md §18.16). The `.app`, the window, the code's
+  names, the repository and tools folders, the default save folder and
+  the developer's tool (`mmc-convert`) follow; the bundle identifier and
+  the preferences key are kept, so saved settings carry over. Earlier
+  entries keep the old names.
+
 - Stage 6, hardening: cancelling and quitting stop every tool and what
   it started; closing the window quits, asking first during a job; a
   crash's temporary files cleaned at launch; MP3 names within 200 bytes,

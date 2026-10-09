@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import MacMusicTransferKit
+@testable import MacMusicConverterKit
 
 /// The engine with its options: normalisation, trimming, conflicts,
 /// cancelling and damaged audio (§6, §11, §13.2; N1-N8).

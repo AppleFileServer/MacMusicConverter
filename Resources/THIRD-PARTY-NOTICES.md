@@ -1,6 +1,6 @@
-# Third-party software in the MacMusic Transfer Utility
+# Third-party software in the MacMusic Converter Utility
 
-The MacMusic Transfer Utility is © 2026 Jack McAteer. It runs these
+The MacMusic Converter Utility is © 2026 Jack McAteer. It runs these
 programs, made by others, under their own licences. They are separate
 programs, run as separate processes; none of their code is part of the
 app's own.
@@ -13,7 +13,7 @@ configured with `--enable-gpl --enable-version3`).
 Built by Martin Riedl (https://ffmpeg.martin-riedl.de), from FFmpeg
 (https://ffmpeg.org). FFmpeg's source: https://ffmpeg.org/download.html;
 this build's configuration and component versions:
-`transfer-tools/ffmpeg-9.0.2/zips/versions.txt`.
+`converter-tools/ffmpeg-9.0.2/zips/versions.txt`.
 It includes, among others: LAME 4.0 (MP3 encoding; LGPL 2.0), x264 and
 x265 (GPL 2.0+), OpenSSL 3.6 (Apache 2.0), Opus (BSD), libvorbis (BSD),
 dav1d (BSD), libaom (BSD), freetype (FreeType licence), harfbuzz (MIT),

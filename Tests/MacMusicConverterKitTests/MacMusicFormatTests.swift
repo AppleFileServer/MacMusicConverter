@@ -1,5 +1,5 @@
 import Testing
-@testable import MacMusicTransferKit
+@testable import MacMusicConverterKit
 
 /// The contract's values hang together: one byte a sample, one channel,
 /// so the byte rate and block align follow from the rest (§18.2).

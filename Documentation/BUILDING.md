@@ -25,29 +25,29 @@ either. Naming it works:
 ## Commands
 
     tools/test.sh           # build and run the engine's tests
-    tools/build-app.sh      # build/MacMusic Transfer Utility.app, signed ad hoc
-    open "build/MacMusic Transfer Utility.app"
+    tools/build-app.sh      # build/MacMusic Converter Utility.app, signed ad hoc
+    open "build/MacMusic Converter Utility.app"
 
 `build/` and `.build/` are not kept in the repository.
 
 ## External tools (decisions T6, S1, S2)
 
-Kept outside the repository, in `~/MacPlusProjects/transfer-tools/`,
+Kept outside the repository, in `~/MacPlusProjects/converter-tools/`,
 with a `MANIFEST.txt` (versions, URLs, checksums, signatures):
 
 | Tool | Version | From |
 |---|---|---|
 | FFmpeg, ffprobe | 9.0.2, static, arm64 (GPL) | Martin Riedl's builds, ffmpeg.martin-riedl.de |
-| yt-dlp | 2026.08.19, `yt-dlp_macos` (Unlicense) | github.com/yt-dlp/yt-dlp releases; behind the link `transfer-tools/yt-dlp` |
-| Deno | 2.9.7, aarch64 (MIT) | github.com/denoland/deno releases; behind the link `transfer-tools/deno` |
+| yt-dlp | 2026.08.19, `yt-dlp_macos` (Unlicense) | github.com/yt-dlp/yt-dlp releases; behind the link `converter-tools/yt-dlp` |
+| Deno | 2.9.7, aarch64 (MIT) | github.com/denoland/deno releases; behind the link `converter-tools/deno` |
 
-The engine finds them (`Tools.locate`) in: the folder `MMT_TOOLS_BIN`
+The engine finds them (`Tools.locate`) in: the folder `MMC_TOOLS_BIN`
 names; the app's `Contents/Resources/bin` (Stage 7); then
-`~/MacPlusProjects/transfer-tools/ffmpeg-9.0.2/bin`.
+`~/MacPlusProjects/converter-tools/ffmpeg-9.0.2/bin`.
 
 To fetch them again:
 
-    T=~/MacPlusProjects/transfer-tools/ffmpeg-9.0.2; mkdir -p $T/zips $T/bin; cd $T/zips
+    T=~/MacPlusProjects/converter-tools/ffmpeg-9.0.2; mkdir -p $T/zips $T/bin; cd $T/zips
     U=https://ffmpeg.martin-riedl.de/download/macos/arm64/1789931890_9.0.2
     for f in ffmpeg.zip ffmpeg.zip.sha256 ffprobe.zip ffprobe.zip.sha256 versions.txt; do
         curl -fLO $U/$f; done
@@ -60,15 +60,15 @@ updating", in the app). Never silently:
 
     tools/update-yt-dlp.sh      # fetches, checks the checksum, shows the version, asks
 
-The app finds yt-dlp and Deno (`YouTubeTools.locate`) in: `MMT_TOOLS_BIN`
+The app finds yt-dlp and Deno (`YouTubeTools.locate`) in: `MMC_TOOLS_BIN`
 (`yt-dlp`, `deno`); the app's `Contents/Resources/bin`; then
-`transfer-tools/yt-dlp/yt-dlp_macos` and `transfer-tools/deno/deno`.
+`converter-tools/yt-dlp/yt-dlp_macos` and `converter-tools/deno/deno`.
 
 This build has no SoX resampler (it isn't configured with libsoxr), so
 the converter uses FFmpeg's own at high-quality settings (§18.5).
 
 ## The developer's converter
 
-    swift build -c release --product mmt-convert     # with SDKROOT set, as above
-    .build/release/mmt-convert <input file or YouTube address> <output folder> [--title "Title"] [--name "File name"] \
+    swift build -c release --product mmc-convert     # with SDKROOT set, as above
+    .build/release/mmc-convert <input file or YouTube address> <output folder> [--title "Title"] [--name "File name"] \
         [--normalise [dBFS]] [--trim [2|3]] [--wav | --mp3 | --both] [--reencode]

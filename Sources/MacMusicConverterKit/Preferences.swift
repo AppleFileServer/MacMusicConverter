@@ -23,10 +23,10 @@ public struct Preferences: Codable, Sendable, Equatable {
                           trimSilence: trimSilence, trimThreshold: trimThreshold)
     }
 
-    /// `~/Music/MacMusic Transfer`, the default (W3); made when first used.
+    /// `~/Music/MacMusic Converter`, the default (W3); made when first used.
     public static var defaultFolder: URL {
         FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Music/MacMusic Transfer", isDirectory: true)
+            .appendingPathComponent("Music/MacMusic Converter", isDirectory: true)
     }
 
     public var folder: URL {
@@ -39,6 +39,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         trimThreshold = trimThreshold >= 2.5 ? 3 : 2
     }
 
+    /// Kept from the app's earlier name, "MacMusic Transfer Utility", so the
+    /// choices saved then are still read (decision R6). Not shown anywhere.
     static let key = "MacMusicTransfer.preferences"
 
     public static func load(from defaults: UserDefaults = .standard) -> Preferences {

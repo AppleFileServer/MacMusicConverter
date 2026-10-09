@@ -32,7 +32,7 @@ public struct ProcessRunner: Sendable {
         guard files.isExecutableFile(atPath: executable.path) else {
             throw ProcessRunnerError.executableNotFound(executable.path)
         }
-        let dir = files.temporaryDirectory.appendingPathComponent("mmt-process-\(UUID().uuidString)")
+        let dir = files.temporaryDirectory.appendingPathComponent("mmc-process-\(UUID().uuidString)")
         try files.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? files.removeItem(at: dir) }
         let outURL = dir.appendingPathComponent("stdout")
@@ -83,7 +83,7 @@ extension ProcessRunner {
         guard files.isExecutableFile(atPath: executable.path) else {
             throw ProcessRunnerError.executableNotFound(executable.path)
         }
-        let dir = files.temporaryDirectory.appendingPathComponent("mmt-process-\(UUID().uuidString)")
+        let dir = files.temporaryDirectory.appendingPathComponent("mmc-process-\(UUID().uuidString)")
         try files.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? files.removeItem(at: dir) }
         let errURL = dir.appendingPathComponent("stderr")

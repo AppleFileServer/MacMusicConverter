@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import MacMusicTransferKit
+@testable import MacMusicConverterKit
 
 /// The window's logic, kept in the engine so it can be tested (W8).
 @Suite struct WindowLogicTests {
@@ -8,7 +8,7 @@ import Testing
     init() throws { f = try Fixtures() }
 
     @Test func preferencesRoundTrip() throws {
-        let defaults = try #require(UserDefaults(suiteName: "mmt-test-\(UUID().uuidString)"))
+        let defaults = try #require(UserDefaults(suiteName: "mmc-test-\(UUID().uuidString)"))
         #expect(Preferences.load(from: defaults) == Preferences())
         var p = Preferences()
         p.selection = .both
@@ -24,7 +24,7 @@ import Testing
     }
 
     @Test func preferencesAreTidied() throws {
-        let defaults = try #require(UserDefaults(suiteName: "mmt-test-\(UUID().uuidString)"))
+        let defaults = try #require(UserDefaults(suiteName: "mmc-test-\(UUID().uuidString)"))
         var p = Preferences()
         p.target = -40
         p.trimThreshold = 7
@@ -34,7 +34,7 @@ import Testing
     }
 
     @Test func defaultFolder() {
-        #expect(Preferences().folder.path.hasSuffix("Music/MacMusic Transfer"))
+        #expect(Preferences().folder.path.hasSuffix("Music/MacMusic Converter"))
     }
 
     @Test func savesAsAndConflicts() throws {
