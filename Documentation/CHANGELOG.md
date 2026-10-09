@@ -2,6 +2,15 @@
 
 ## 0.1.0 (in development)
 
+- Stage 6, hardening: cancelling and quitting stop every tool and what
+  it started; closing the window quits, asking first during a job; a
+  crash's temporary files cleaned at launch; MP3 names within 200 bytes,
+  keeping every character; a vanished folder or failed move fails that
+  output only; yt-dlp's network timeout and no cookie files; tests for
+  awkward names, read-only and vanishing folders, a full disk, no tools.
+  SECURITY.md and the third-party notices (in the app: Licences…).
+  95 tests.
+
 - Stage 5, YouTube: paste one video's address (a playlist in it
   dropped), Look Up its details, Convert: its audio retrieved once,
   converted to the WAV, the MP3 or both, the download deleted; no

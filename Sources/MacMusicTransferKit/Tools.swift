@@ -16,17 +16,18 @@ public struct Tools: Sendable {
     public static let pinnedFolder = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent("MacPlusProjects/transfer-tools/ffmpeg-9.0.2/bin")
 
-    public static func locate(environment: [String: String] = ProcessInfo.processInfo.environment)
-        throws -> Tools
+    public static func locate(environment: [String: String] = ProcessInfo.processInfo.environment,
+                              resources: URL? = Bundle.main.resourceURL,
+                              pinned: URL = pinnedFolder) throws -> Tools
     {
         var folders: [URL] = []
         if let named = environment["MMT_TOOLS_BIN"], !named.isEmpty {
             folders.append(URL(fileURLWithPath: named))
         }
-        if let resources = Bundle.main.resourceURL {
+        if let resources {
             folders.append(resources.appendingPathComponent("bin"))
         }
-        folders.append(pinnedFolder)
+        folders.append(pinned)
 
         func find(_ name: String) throws -> URL {
             for folder in folders {

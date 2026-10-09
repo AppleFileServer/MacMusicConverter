@@ -1271,3 +1271,46 @@ MacMusic (Mini vMac, then the real Plus).
 - **A sorting order mattered:** "Requested format is not available"
   (yt-dlp out of date) must be tested before "is not available" (the
   video gone). Found by the tests.
+
+## 18.14 Stage 6 decisions (2026-10-09, approved by the owner)
+
+- **H1, a crash's leftovers:** cleaned at launch: only the app's own
+  temporary files (`.mmt-….partial`, `mmt-youtube-…`, `mmt-process-…`),
+  only over an hour old.
+- **H2, closing and quitting:** closing the window quits the app; during
+  a job, closing or quitting asks "Stop the conversion and quit?"; on the
+  way out every tool the app started, and the tools they started, are
+  stopped (SIGTERM, then SIGKILL after 3 s).
+- **H3, long names:** the MP3's name at most 200 bytes (macOS allows
+  255), cut at a word, never inside a character; MP3 names keep every
+  character (they never go to the Mac); names in one Unicode form.
+- **H4, the full-disk test:** a 4 MB disk image, made with hdiutil in
+  the test and removed afterwards.
+- **H5, no tools:** a plain message, tested; the real clean-install test
+  with the tools inside the app is Stage 7's.
+- **H6, the notices:** `Resources/THIRD-PARTY-NOTICES.md`, copied into
+  the app; Advanced's "Licences…" opens it.
+
+## 18.15 Stage 6 findings (2026-10-09)
+
+- **yt-dlp passes a stop on to its child** (its build is a parent and a
+  child), but the app no longer relies on that: it finds and stops every
+  descendant itself.
+- **`proc_listchildpids` returns a count, not bytes:** dividing by four
+  found no children, so the safety net did nothing. Found by the test.
+- **Finished tools stayed on the running list** when removed by polling
+  (risking a signal to a reused process ID at quit); now removed in the
+  termination handler.
+- **Ended-but-unreaped processes ("zombies") count as alive to
+  `kill(pid, 0)`;** the checks use the process's state instead.
+- **Tests running tools at the same time** made "stop everything" and
+  "the first process with two children" unsafe in tests; each test now
+  touches only its own processes.
+- **A vanished folder or a failed move** now fails that output, rather
+  than ending the job with an unexplained error.
+- **yt-dlp gets `--socket-timeout 30` and `--no-cookies`.**
+- **Privacy review:** no logging, no network code of the app's own, no
+  credentials; recorded in SECURITY.md, each point checked in the code.
+- **The owner's checks 9-12** (quitting and closing mid-job, closing
+  when idle, Licences…): done; "no files seem left behind and it quit
+  cleanly". **Stage 6's acceptance criterion is met.**

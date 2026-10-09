@@ -1,0 +1,84 @@
+import AppKit
+import MacMusicTransferKit
+
+/// Quitting safely (Stage 6; H2): closing the window quits the app;
+/// during a job, either asks "Stop the conversion and quit?" first; and
+/// on the way out every tool still running is stopped, so nothing carries
+/// on after the app has gone.
+@MainActor
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    weak var model: AppModel?
+    private var quitting = false
+    private var guards: [CloseGuard] = []
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        if quitting || !(model?.running ?? false) { return .terminateNow }
+        return confirmStop() ? .terminateNow : .terminateCancel
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        model?.cancel()
+        RunningTools.shared.stopAll(wait: 3)
+    }
+
+    /// Asks; on "Stop and Quit", cancels the job and stops its tools.
+    func confirmStop() -> Bool {
+        let alert = NSAlert()
+        alert.messageText = "Stop the conversion and quit?"
+        alert.informativeText = "The file being converted won't be saved. Anything already finished is kept."
+        alert.addButton(withTitle: "Keep Converting")
+        alert.addButton(withTitle: "Stop and Quit")
+        alert.buttons[1].hasDestructiveAction = true
+        guard alert.runModal() == .alertSecondButtonReturn else { return false }
+        quitting = true
+        model?.cancel()
+        RunningTools.shared.stopAll(wait: 3)
+        return true
+    }
+
+    /// Watches a window's close button.
+    func watch(_ window: NSWindow) {
+        guard !guards.contains(where: { $0.window === window }) else { return }
+        let g = CloseGuard(window: window) { [weak self] in
+            guard let self, self.model?.running == true, !self.quitting else { return true }
+            if self.confirmStop() {
+                DispatchQueue.main.async { NSApp.terminate(nil) }
+            }
+            return false
+        }
+        guards.append(g)
+    }
+}
+
+/// Stands in front of a window's delegate (SwiftUI's), to ask before the
+/// window closes; everything else is passed on to the real delegate.
+final class CloseGuard: NSObject, NSWindowDelegate {
+    weak var window: NSWindow?
+    weak var original: NSWindowDelegate?
+    let shouldClose: @MainActor () -> Bool
+
+    @MainActor
+    init(window: NSWindow, shouldClose: @escaping @MainActor () -> Bool) {
+        self.window = window
+        self.original = window.delegate
+        self.shouldClose = shouldClose
+        super.init()
+        window.delegate = self
+    }
+
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        let allowed = MainActor.assumeIsolated { shouldClose() }
+        guard allowed else { return false }
+        return original?.windowShouldClose?(sender) ?? true
+    }
+
+    override func responds(to aSelector: Selector!) -> Bool {
+        super.responds(to: aSelector) || (original?.responds(to: aSelector) ?? false)
+    }
+
+    override func forwardingTarget(for aSelector: Selector!) -> Any? {
+        original?.responds(to: aSelector) == true ? original : super.forwardingTarget(for: aSelector)
+    }
+}

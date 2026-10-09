@@ -138,7 +138,8 @@ import Testing
         let a = try args()
         // One video, never a playlist; no cookies; the age workaround off;
         // the address last, after "--", so it can't be read as an option.
-        #expect(a.contains("--no-playlist") && a.contains("--no-cookies-from-browser") && a.contains("--skip-download"))
+        #expect(a.contains("--no-playlist") && a.contains("--no-cookies") && a.contains("--no-cookies-from-browser")
+                && a.contains("--skip-download"))
         #expect(a.contains("youtube:player_client=default,-web_embedded"))
         #expect(a.suffix(2) == ["--", "https://www.youtube.com/watch?v=RMxRDTfzgpU"])
     }

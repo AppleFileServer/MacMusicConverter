@@ -51,6 +51,9 @@ final class AppModel {
     private var selectionForJob: OutputSelection = .wav
 
     init() {
+        // What a crash may have left (H1): only ours, only over an hour old.
+        let folders = [prefs.folder, FileManager.default.temporaryDirectory]
+        Task.detached(priority: .utility) { Leftovers.clean(folders) }
         do {
             tools = try Tools.locate()
         } catch let error as ToolsError {
@@ -288,4 +291,11 @@ final class AppModel {
     func useDefaultFolder() { prefs.folderPath = nil }
 
     func show(_ url: URL) { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+
+    /// The bundled tools' licences (H6), from the app's resources.
+    var noticesURL: URL? { Bundle.main.url(forResource: "THIRD-PARTY-NOTICES", withExtension: "md") }
+
+    func showNotices() {
+        if let url = noticesURL { NSWorkspace.shared.open(url) }
+    }
 }

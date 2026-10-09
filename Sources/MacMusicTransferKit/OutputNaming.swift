@@ -13,14 +13,17 @@ public enum ConflictPolicy: Sendable, Equatable {
 /// Safe file names for the outputs (§10; N7).
 public enum OutputNaming {
     /// A name that's safe as one file name: no folders, no colons, no
-    /// control characters, not hidden; letters the Mac can't show
-    /// transliterated; "Untitled" if nothing is left.
-    public static func safeBase(_ raw: String) -> String {
-        var text = raw.unicodeScalars.map { s -> String in
+    /// control characters, not hidden; for the Mac (`forMac`, the WAV),
+    /// letters it can't show transliterated; "Untitled" if nothing is
+    /// left. The MP3, which never goes to the Mac, keeps every character.
+    public static func safeBase(_ raw: String, forMac: Bool = true) -> String {
+        // One form of each accented letter (é, not e + ´), so the same
+        // title always gives the same name.
+        var text = raw.precomposedStringWithCanonicalMapping.unicodeScalars.map { s -> String in
             if s.value < 0x20 || s.value == 0x7F { return "" }
             if s == "/" || s == ":" || s == "\\" { return "-" }
             let c = String(s)
-            if c.data(using: .macOSRoman) != nil { return c }
+            if !forMac || c.data(using: .macOSRoman) != nil { return c }
             let plain = c.applyingTransform(StringTransform("Any-Latin; Latin-ASCII"), reverse: false) ?? ""
             return plain.data(using: .macOSRoman) != nil && !plain.isEmpty ? plain : "_"
         }.joined()
@@ -52,8 +55,27 @@ public enum OutputNaming {
     public static func name(_ kind: OutputKind, _ base: String, suffix: String = "") -> String {
         switch kind {
         case .macMusicWAV: macMusicName(base, suffix: suffix)
-        case .mp3: safeBase(base) + suffix + ".mp3"
+        case .mp3: limited(safeBase(base, forMac: false), bytes: mp3NameBytes - ".mp3".utf8.count - suffix.utf8.count)
+            + suffix + ".mp3"
         }
+    }
+
+    /// The MP3's name, at most 200 bytes (H3): macOS allows 255.
+    public static let mp3NameBytes = 200
+
+    /// Cut to `bytes` of UTF-8, at a word where it can be, never inside a
+    /// character.
+    static func limited(_ name: String, bytes: Int) -> String {
+        guard name.utf8.count > bytes else { return name }
+        var cut = ""
+        for c in name {
+            if cut.utf8.count + String(c).utf8.count > bytes { break }
+            cut.append(c)
+        }
+        if let space = cut.lastIndex(of: " "), cut.utf8.distance(from: cut.startIndex, to: space) >= bytes / 2 {
+            cut = String(cut[..<space])
+        }
+        return cut.trimmingCharacters(in: CharacterSet(charactersIn: " ,;-_"))
     }
 
     /// Where the WAV goes in `folder`, by `policy`. Throws if the name is

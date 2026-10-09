@@ -124,10 +124,11 @@ public struct YouTubeSource: Sendable {
     /// playlist, our Deno and FFmpeg, and the age-restriction workaround
     /// (the embedded player) left out (§8.3; Y4).
     var common: [String] {
-        ["--ignore-config", "--no-playlist", "--no-cookies-from-browser", "--no-cache-dir",
+        ["--ignore-config", "--no-playlist", "--no-cookies", "--no-cookies-from-browser", "--no-cache-dir",
          "--js-runtimes", "deno:" + tools.deno.path,
          "--ffmpeg-location", tools.ffmpegFolder.path,
          "--extractor-args", "youtube:player_client=default,-web_embedded",
+         "--socket-timeout", "30",                     // a stalled network: an error, not a hang
          "--no-warnings", "--no-color"]
     }
 

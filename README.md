@@ -10,7 +10,7 @@ normalised and with long silence trimmed from the ends, through the
 developer's command-line tool, `mmt-convert` (BUILDING.md); checked
 against MacMusic's own import rules, and confirmed in MacMusic. Stage 3
 added MP3s (192 kbps) and both outputs from one job; Stage 4, the
-window; Stage 5, YouTube.
+window; Stage 5, YouTube; Stage 6, hardening.
 
 Using it: open the app, choose or drop a sound file (or, in YouTube,
 paste the address of a video you may save and Look Up), pick MacMusic WAV,
@@ -37,6 +37,8 @@ Details: `Documentation/BUILDING.md`.
 | `Documentation/BUILDING.md` | building, and the environment |
 | `Documentation/TESTING.md` | the tests, and checking files in MacMusic |
 | `Documentation/RELEASES.md` | packaging, the bundled tools and their licences |
+| `Documentation/SECURITY.md` | what it does and never does with your files, network and information |
+| `Resources/THIRD-PARTY-NOTICES.md` | the bundled tools' licences |
 | `Documentation/CHANGELOG.md` | changes by version |
 
 Copyright © 2026 Jack McAteer. Not affiliated with Apple or YouTube.

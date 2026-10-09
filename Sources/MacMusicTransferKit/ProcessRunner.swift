@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 
 /// What an external tool did: its exit status and everything it wrote.
 public struct ProcessOutput: Sendable {
@@ -154,6 +155,12 @@ private final class ProcessBox: @unchecked Sendable {
     var wasCancelled: Bool { lock.withLock { cancelled } }
 
     func start(_ process: Process) throws {
+        // Off the running list the moment it ends, before the runner hears.
+        let then = process.terminationHandler
+        process.terminationHandler = { p in
+            RunningTools.shared.remove(p.processIdentifier)
+            then?(p)
+        }
         try lock.withLock {
             if cancelled { throw ProcessRunnerError.cancelled }
             self.process = process
@@ -162,6 +169,7 @@ private final class ProcessBox: @unchecked Sendable {
             } catch {
                 throw ProcessRunnerError.launchFailed(error.localizedDescription)
             }
+            RunningTools.shared.add(process.processIdentifier)
         }
     }
 
@@ -171,7 +179,78 @@ private final class ProcessBox: @unchecked Sendable {
             return process
         }
         if let running, running.isRunning {
-            running.terminate()
+            ProcessTree.stop(running.processIdentifier)
+        }
+    }
+}
+
+/// Stopping a tool and everything it started (Stage 6): yt-dlp's build
+/// runs as a parent and a child, and runs Deno; FFmpeg runs alone. All of
+/// them are asked to stop (SIGTERM), children found before the parent
+/// goes; anything still running three seconds later is stopped outright
+/// (SIGKILL).
+public enum ProcessTree {
+    public static func descendants(of pid: pid_t) -> [pid_t] {
+        var found: [pid_t] = []
+        var queue = [pid]
+        while let next = queue.popLast() {
+            var buffer = [pid_t](repeating: 0, count: 256)
+            // It takes the buffer's size in bytes, but returns how many
+            // children it found (not bytes).
+            let count = proc_listchildpids(next, &buffer, Int32(MemoryLayout<pid_t>.size * buffer.count))
+            guard count > 0 else { continue }
+            let children = buffer.prefix(min(Int(count), buffer.count)).filter { $0 > 0 }
+            found += children
+            queue += children
+        }
+        return found
+    }
+
+    public static func stop(_ pid: pid_t) {
+        let family = [pid] + descendants(of: pid)
+        for p in family.reversed() { kill(p, SIGTERM) }
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 3) {
+            for p in family where isAlive(p) { kill(p, SIGKILL) }
+        }
+    }
+
+    /// Running (not gone, and not a "zombie": ended, waiting to be
+    /// cleared away, which kill(pid, 0) still counts).
+    public static func isAlive(_ pid: pid_t) -> Bool {
+        var info = proc_bsdinfo()
+        let size = Int32(MemoryLayout<proc_bsdinfo>.size)
+        guard proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, size) == size else { return false }
+        return info.pbi_status != 5            // SZOMB
+    }
+}
+
+/// Every tool the app has running, so quitting can stop them all
+/// (Stage 6; H2).
+public final class RunningTools: @unchecked Sendable {
+    public static let shared = RunningTools()
+    private let lock = NSLock()
+    private var pids: Set<pid_t> = []
+
+    func add(_ pid: pid_t) { lock.withLock { _ = pids.insert(pid) } }
+    func remove(_ pid: pid_t) { lock.withLock { _ = pids.remove(pid) } }
+    public var running: [pid_t] { lock.withLock { Array(pids) } }
+
+    /// Stops them all and waits (up to `wait` seconds) for them to go:
+    /// for quitting, when nothing may be left behind.
+    public func stopAll(wait: TimeInterval = 3) {
+        stop(running, wait: wait)
+    }
+
+    /// Stops these (and their families), waiting up to `wait` seconds.
+    func stop(_ all: [pid_t], wait: TimeInterval) {
+        for pid in all {
+            let family = [pid] + ProcessTree.descendants(of: pid)
+            for p in family.reversed() { kill(p, SIGTERM) }
+        }
+        let deadline = Date().addingTimeInterval(wait)
+        while Date() < deadline, all.contains(where: ProcessTree.isAlive) { usleep(50_000) }
+        for pid in all where ProcessTree.isAlive(pid) {
+            for p in [pid] + ProcessTree.descendants(of: pid) { kill(p, SIGKILL) }
         }
     }
 }

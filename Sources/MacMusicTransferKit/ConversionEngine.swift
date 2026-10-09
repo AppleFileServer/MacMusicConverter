@@ -10,6 +10,9 @@ public struct ConversionEngine: Sendable {
     /// For the tests only: outputs whose conversion is made to fail, to
     /// show the other output survives (§13.3).
     var faults: Set<OutputKind> = []
+    /// For the tests only: skip the free-space estimate, to see what
+    /// happens when a disk fills mid-write.
+    var checksSpace = true
 
     public init(tools: Tools) { self.tools = tools }
 
@@ -117,7 +120,7 @@ public struct ConversionEngine: Sendable {
         let needed = kinds.reduce(Int64(0)) {
             $0 + ($1 == .mp3 ? DiskSpace.mp3Bytes(seconds: length) : DiskSpace.macMusicBytes(seconds: length))
         }
-        if let free = DiskSpace.available(at: job.outputFolder), free < needed {
+        if checksSpace, let free = DiskSpace.available(at: job.outputFolder), free < needed {
             throw ConversionError.insufficientSpace(needed: needed, available: free)
         }
         try Task.checkCancellation()
@@ -141,13 +144,22 @@ public struct ConversionEngine: Sendable {
                 pending[i].problems.append("The conversion failed: "
                     + made.stderrText.trimmingCharacters(in: .whitespacesAndNewlines))
             } else if p.kind == .macMusicWAV, let title = job.title, let bytes = MacMusicText.infoTitle(title) {
-                try WAVFile.appendTitle(bytes, to: p.temporary)
+                do {
+                    try WAVFile.appendTitle(bytes, to: p.temporary)
+                } catch {
+                    pending[i].problems.append("Its title couldn't be added: \(error.localizedDescription)")
+                }
             }
             try Task.checkCancellation()
         }
 
-        // Validating each output on its own.
+        // Validating each output on its own (one whose file has vanished,
+        // its folder gone, fails here).
         onStage(.validatingOutputs)
+        for i in pending.indices where pending[i].problems.isEmpty
+            && !files.fileExists(atPath: pending[i].temporary.path) {
+            pending[i].problems.append("Its file disappeared before it could be checked: the folder may have been removed.")
+        }
         for i in pending.indices where pending[i].problems.isEmpty {
             switch pending[i].kind {
             case .macMusicWAV: await checkWAV(&pending[i], job: job, expected: length, normalisation: normalisation)
@@ -184,10 +196,20 @@ public struct ConversionEngine: Sendable {
                                             checked: p.checked, size: nil, peak: p.peak))
                 continue
             }
-            if job.conflict == .replace, files.fileExists(atPath: p.destination.path) {
-                _ = try files.replaceItemAt(p.destination, withItemAt: p.temporary)
-            } else {
-                try files.moveItem(at: p.temporary, to: p.destination)
+            // Moving can still fail (the folder gone, a name taken a moment
+            // ago): that output fails, the other is unaffected.
+            do {
+                if job.conflict == .replace, files.fileExists(atPath: p.destination.path) {
+                    _ = try files.replaceItemAt(p.destination, withItemAt: p.temporary)
+                } else {
+                    try files.moveItem(at: p.temporary, to: p.destination)
+                }
+            } catch {
+                outputs.append(OutputResult(kind: p.kind, url: nil,
+                                            problems: ["It couldn't be saved in the folder: \(error.localizedDescription)"],
+                                            warnings: shared + p.warnings, report: p.report,
+                                            checked: p.checked, size: nil, peak: p.peak))
+                continue
             }
             kept.add(p.destination.path)
             let size = (try? files.attributesOfItem(atPath: p.destination.path)[.size] as? Int64) ?? nil

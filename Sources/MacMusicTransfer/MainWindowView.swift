@@ -237,7 +237,14 @@ struct MainWindowView: View {
                 }
                 LabeledContent("yt-dlp", value: model.ytdlpVersion.isEmpty ? "—" : model.ytdlpVersion)
                 LabeledContent("Deno", value: model.denoVersion.isEmpty ? "—" : model.denoVersion)
-                LabeledContent("Version", value: AppVersion.string)
+                LabeledContent("Version") {
+                    HStack {
+                        Text(AppVersion.string)
+                        if model.noticesURL != nil {
+                            Button("Licences…") { model.showNotices() }
+                        }
+                    }
+                }
             }
         }
     }
