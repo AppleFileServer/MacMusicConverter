@@ -9,8 +9,13 @@ shared engine converts local files to MacMusic WAVs, optionally
 normalised and with long silence trimmed from the ends, through the
 developer's command-line tool, `mmt-convert` (BUILDING.md); checked
 against MacMusic's own import rules, and confirmed in MacMusic. Stage 3
-added MP3s (192 kbps) and both outputs from one job. The window comes in
-Stage 4.
+added MP3s (192 kbps) and both outputs from one job; Stage 4, the
+window. YouTube comes in Stage 5.
+
+Using it: open the app, choose or drop a sound file, pick MacMusic WAV,
+MP3 or both, type a title, and Convert. The files go to
+`~/Music/MacMusic Transfer` unless you choose another folder. Then copy
+the WAV to the Mac and import it in MacMusic.
 
 ## Building
 

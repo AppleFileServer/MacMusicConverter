@@ -31,8 +31,13 @@ public struct AudioAnalyser: Sendable {
 
     public init(tools: Tools) { self.tools = tools }
 
-    public func analyse(_ url: URL, sampleRate: Int, channels: Int) async throws -> AudioAnalysis {
+    /// `expectedFrames`, if known (from the file's header), lets it report
+    /// how far it has got, 0 to 1, through `progress`.
+    public func analyse(_ url: URL, sampleRate: Int, channels: Int, expectedFrames: Int? = nil,
+                        progress: (@Sendable (Double) -> Void)? = nil) async throws -> AudioAnalysis {
         let meter = Meter(channels: max(channels, 1))
+        meter.expected = expectedFrames
+        meter.progress = progress
         let result = try await runner.stream(tools.ffmpeg, arguments: [
             "-nostdin", "-hide_banner", "-v", "error", "-i", url.path,
             "-map", "0:a:0", "-vn",
@@ -54,6 +59,8 @@ public struct AudioAnalyser: Sendable {
         var lastSound: Int?
         var broken = 0
         var leftover = Data()
+        var expected: Int?
+        var progress: (@Sendable (Double) -> Void)?
 
         init(channels: Int) {
             self.channels = channels
@@ -86,6 +93,9 @@ public struct AudioAnalyser: Sendable {
                     frames += 1
                     i += channels
                 }
+            }
+            if let expected, expected > 0, let progress {
+                progress(min(Double(frames) / Double(expected), 1))
             }
         }
 

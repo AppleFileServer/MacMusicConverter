@@ -13,11 +13,21 @@ public struct ConversionEngine: Sendable {
 
     public init(tools: Tools) { self.tools = tools }
 
+    /// Runs a job, reporting each change of stage.
     public func run(_ job: ConversionJob,
                     onStage: @escaping @Sendable (JobStage) -> Void = { _ in }) async throws -> JobResult {
+        let seen = StageFilter()
+        return try await run(job, onProgress: { p in if seen.isNew(p.stage) { onStage(p.stage) } })
+    }
+
+    /// Runs a job, reporting its stage and how far through it (W6).
+    public func run(_ job: ConversionJob,
+                    onProgress: @escaping @Sendable (JobProgress) -> Void) async throws -> JobResult {
+        let throttle = ProgressThrottle(onProgress)
+        let onStage: @Sendable (JobStage) -> Void = { throttle.send(JobProgress(stage: $0)) }
         let kept = Kept()
         do {
-            return try await perform(job, kept: kept, onStage: onStage)
+            return try await perform(job, kept: kept, progress: throttle)
         } catch ProcessRunnerError.cancelled {
             onStage(.cancelled)
             throw ConversionError.cancelled(kept: kept.paths)
@@ -47,9 +57,9 @@ public struct ConversionEngine: Sendable {
         var peak: Double?
     }
 
-    func perform(_ job: ConversionJob, kept: Kept,
-                 onStage: @escaping @Sendable (JobStage) -> Void) async throws -> JobResult {
+    func perform(_ job: ConversionJob, kept: Kept, progress: ProgressThrottle) async throws -> JobResult {
         let files = FileManager.default
+        let onStage: @Sendable (JobStage) -> Void = { progress.send(JobProgress(stage: $0)) }
 
         // Validating: the source, the destination, what the source is.
         onStage(.validating)
@@ -81,8 +91,10 @@ public struct ConversionEngine: Sendable {
 
         // Analysing: one pass, then one decision for every output (§6.3).
         onStage(.analysing)
+        let expected = source.duration.map { Int($0 * Double(source.sampleRate)) }
         let analysis = try await AudioAnalyser(tools: tools)
-            .analyse(job.source, sampleRate: source.sampleRate, channels: source.channels)
+            .analyse(job.source, sampleRate: source.sampleRate, channels: source.channels,
+                     expectedFrames: expected) { progress.send(JobProgress(stage: .analysing, fraction: $0)) }
         guard analysis.brokenSamples == 0 else { throw ConversionError.brokenAudio(analysis.brokenSamples) }
         guard analysis.frames > 0 else { throw ConversionError.noAudio }
         let trim = job.options.trimSilence ? Trim.decide(analysis, threshold: job.options.trimThreshold) : nil
@@ -116,8 +128,15 @@ public struct ConversionEngine: Sendable {
         onStage(.converting)
         for i in pending.indices {
             let p = pending[i]
-            let made = try await runner.run(tools.ffmpeg, arguments: arguments(
-                for: p.kind, job: job, source: source, trim: trim, gain: normalisation.dB, into: p.temporary))
+            let kind = p.kind
+            progress.send(JobProgress(stage: .converting, fraction: 0, output: kind))
+            // FFmpeg reports how far it has got on its standard output.
+            let report = ProgressText()
+            let made = try await runner.stream(tools.ffmpeg, arguments: arguments(
+                for: p.kind, job: job, source: source, trim: trim, gain: normalisation.dB, into: p.temporary)) {
+                let fraction = JobProgress.fraction(fromFFmpegProgress: report.add($0), length: length)
+                progress.send(JobProgress(stage: .converting, fraction: fraction, output: kind))
+            }
             if made.status != 0 {
                 pending[i].problems.append("The conversion failed: "
                     + made.stderrText.trimmingCharacters(in: .whitespacesAndNewlines))
@@ -182,6 +201,7 @@ public struct ConversionEngine: Sendable {
     func arguments(for kind: OutputKind, job: ConversionJob, source: AudioInfo, trim: Trim?,
                    gain: Double, into temporary: URL) -> [String] {
         var a = ["-nostdin", "-hide_banner", "-v", "error", "-n",
+                 "-progress", "pipe:1", "-nostats",
                  "-i", job.source.path,
                  "-map", "0:a:0", "-vn", "-sn", "-dn",
                  "-map_metadata", "-1", "-map_chapters", "-1"]
@@ -329,6 +349,31 @@ public struct ConversionEngine: Sendable {
               let bytes = try? WAVFile.read(wav, offset: data.offset, count: data.size) else { return nil }
         let top = bytes.reduce(0) { max($0, abs(Int($1) - 128)) }
         return top == 0 ? -.infinity : 20 * log10(Double(top) / 128)
+    }
+}
+
+/// FFmpeg's progress report so far (only the recent part is kept).
+final class ProgressText: @unchecked Sendable {
+    private let lock = NSLock()
+    private var text = ""
+    func add(_ piece: Data) -> String {
+        lock.withLock {
+            text += String(decoding: piece, as: UTF8.self)
+            if text.count > 4_000 { text = String(text.suffix(1_000)) }
+            return text
+        }
+    }
+}
+
+/// Lets each stage through once (for `run(_:onStage:)`).
+final class StageFilter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var last: JobStage?
+    func isNew(_ s: JobStage) -> Bool {
+        lock.withLock {
+            defer { last = s }
+            return last != s
+        }
     }
 }
 

@@ -24,7 +24,7 @@ as each stage adds to it.
 
 External tools run through one process runner, with argument arrays.
 
-## Now (Stage 3)
+## Now (Stage 4)
 
 | File | Does |
 |---|---|
@@ -41,7 +41,16 @@ External tools run through one process runner, with argument arrays.
 | `ConversionJob` | the job, its options, stages, per-output results and errors (§7.1) |
 | `MP3Format` | the MP3: 192 kbps, the rates MPEG allows, stereo if the source has two or more channels (M1, M4) |
 | `ConversionEngine` | the shared engine (§7.2): validate (and ask before re-encoding an MP3), analyse, decide once, convert each output in its own FFmpeg run into a temporary file beside its destination, check each (the WAV: MacMusic's rules, ffprobe, a decode, the length; the MP3: ffprobe, the title, a decode, the length, the peak), move the passing ones into place; reports its stages; per-output results; cancellable, keeping only finished outputs |
+| `JobProgress` | stage and fraction (W6); FFmpeg's `-progress` read; a throttle (once a percent) |
+| `Preferences`, `OutputPreview`, `UserMessages` | what's remembered (W7); the "Saves as" names and the taken ones (W4); plain messages for every error (§11.3) |
 | `mmt-convert` | the developer's command-line converter (S5), with `--normalise`, `--trim`, `--wav`/`--mp3`/`--both` and `--reencode` |
+
+The app (target `MacMusicTransfer`):
+
+| File | Does |
+|---|---|
+| `AppModel` | the window's state (`@Observable`, main actor): the source and its reading, the job and its progress, the questions; runs the engine in a task |
+| `MainWindowView` | the window: Mode, Source, Output, Sound, Save To, Advanced, Results, the action bar; the two alerts; dropping a file |
 
 The WAV's conversion, as FFmpeg arguments: the first audio stream only,
 no metadata, `atrim` (the kept part), `volume` (the gain, in float), `pan`
@@ -53,4 +62,5 @@ The MP3's: the same stream, trim and gain, then `libmp3lame` at
 192 kbps, the rate and channels of `MP3Format`, ID3v2.3 with the title
 only, a Xing header, bitexact.
 
-The app: still one window showing the format and the version.
+The app runs the engine in a task and shows its progress; cancelling
+cancels the task, which stops FFmpeg.

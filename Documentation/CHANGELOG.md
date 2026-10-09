@@ -2,6 +2,14 @@
 
 ## 0.1.0 (in development)
 
+- Stage 4, the window: Local File mode (YouTube "coming soon"): choose or
+  drop a file; MacMusic WAV, MP3 or both; title and file name, with the
+  names it'll save as; normalise and trim; the save folder
+  (~/Music/MacMusic Transfer by default); Advanced (target, formats,
+  FFmpeg); progress by stage and percentage; Cancel; results with Show in
+  Finder; the re-encode and taken-name questions; choices remembered.
+  Progress reporting in the engine. 70 tests.
+
 - Stage 3, MP3 output and both outputs: MP3s at 192 kbps, stereo when
   the source is, titled; the WAV, the MP3 or both from one job, with one
   analysis, gain and trim; each output made, checked and reported on its

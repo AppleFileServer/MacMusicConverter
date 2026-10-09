@@ -1177,3 +1177,35 @@ MacMusic (Mini vMac, then the real Plus).
   and an MP3 (5.2 MB, stereo, 44.1 kHz, 192 kbps, titled), both
   215.01 s after the same trim and gain. Without `--reencode`,
   `mmt-convert` stopped and wrote nothing.
+
+## 18.10 Stage 4 decisions (2026-10-09, approved by the owner)
+
+- **W1:** the YouTube mode shown, greyed, "Coming soon", until Stage 5.
+- **W2:** an expandable Advanced section: the normalisation target (−6
+  to 0 dBFS), the MacMusic format read-only and fixed (§4.3's protected
+  preset), the MP3 format, FFmpeg's version and location, the app's
+  version. Everything else in view.
+- **W3:** outputs saved by default to `~/Music/MacMusic Transfer`, made
+  on first use; changeable, remembered.
+- **W4:** taken names asked about before anything starts, in one alert
+  naming them: Keep Both (the next free name; the default), Replace,
+  Cancel. The source is never asked about (it always gets a new name).
+- **W5:** an MP3 source with an MP3 output: a note beside the choice;
+  Convert asks Re-encode / WAV Only / Cancel.
+- **W6:** progress: the stage and its percentage (the analysis counts
+  frames against the header's length; each conversion reads FFmpeg's
+  `-progress` against the kept length); no number when there's no
+  length. Updates at most once a percent.
+- **W7:** remembered (UserDefaults): the output choice, normalise, the
+  target, trim and its threshold, the folder; macOS keeps the window's
+  place. Not the source, title or file name.
+- **W8:** the window's logic in the engine library, tested
+  (`WindowLogicTests`); the window checked by trying it (TESTING.md).
+- **Also:** a dropped or chosen file's own title tag fills in the Title
+  box; error messages are plain sentences, with the technical detail
+  under "Details" (§11.3).
+
+## 18.11 Stage 4 findings (2026-10-09)
+
+- The owner tried the window's checks (TESTING.md): "seems perfect".
+  Stage 4's acceptance criterion is met.
