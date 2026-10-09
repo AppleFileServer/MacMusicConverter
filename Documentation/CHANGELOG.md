@@ -2,6 +2,13 @@
 
 ## 0.1.0 (in development)
 
+- Stage 3, MP3 output and both outputs: MP3s at 192 kbps, stereo when
+  the source is, titled; the WAV, the MP3 or both from one job, with one
+  analysis, gain and trim; each output made, checked and reported on its
+  own, one failing leaving the other; MP3 from MP3 only when confirmed;
+  the source never overwritten, even under "replace"; cancelling keeps
+  only finished outputs. `mmt-convert --both --reencode`. 62 tests.
+
 - Stage 2, the shared conversion engine: the job model and its stages;
   one streamed analysis pass (real length, peaks, silent ends, broken
   samples); optional peak normalisation (−1 dBFS, +20 dB at most,

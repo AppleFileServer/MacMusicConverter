@@ -47,12 +47,31 @@ public enum OutputNaming {
         return name + suffix + ".wav"
     }
 
+    /// An output's file name: the WAV's within the Mac's 31 characters; the
+    /// MP3's (which never goes to the Mac) the whole safe name (M4).
+    public static func name(_ kind: OutputKind, _ base: String, suffix: String = "") -> String {
+        switch kind {
+        case .macMusicWAV: macMusicName(base, suffix: suffix)
+        case .mp3: safeBase(base) + suffix + ".mp3"
+        }
+    }
+
     /// Where the WAV goes in `folder`, by `policy`. Throws if the name is
     /// taken and the policy is to refuse.
     public static func macMusicDestination(folder: URL, base: String, policy: ConflictPolicy) throws -> URL {
+        try destination(.macMusicWAV, folder: folder, base: base, policy: policy)
+    }
+
+    /// Where an output goes in `folder`, by `policy`. A name that is the
+    /// source itself is never replaced, whatever the policy (§9.3): it gets
+    /// the next free name instead.
+    public static func destination(_ kind: OutputKind, folder: URL, base: String,
+                                   policy: ConflictPolicy, source: URL? = nil) throws -> URL {
         let files = FileManager.default
-        let first = folder.appendingPathComponent(macMusicName(base))
+        let first = folder.appendingPathComponent(name(kind, base))
         guard files.fileExists(atPath: first.path) else { return first }
+        var policy = policy
+        if let source, sameFile(first, source) { policy = .uniqueName }
         switch policy {
         case .refuse:
             throw ConversionError.outputExists(first.path)
@@ -60,7 +79,7 @@ public enum OutputNaming {
             return first
         case .uniqueName:
             for n in 2...999 {
-                let url = folder.appendingPathComponent(macMusicName(base, suffix: " \(n)"))
+                let url = folder.appendingPathComponent(name(kind, base, suffix: " \(n)"))
                 if !files.fileExists(atPath: url.path) { return url }
             }
             throw ConversionError.outputExists(first.path)
@@ -68,11 +87,26 @@ public enum OutputNaming {
     }
 }
 
+/// Whether two URLs are the same file on disk (this Mac's disk ignores
+/// case, so names alone can't tell).
+public func sameFile(_ a: URL, _ b: URL) -> Bool {
+    let files = FileManager.default
+    guard let x = try? files.attributesOfItem(atPath: a.path),
+          let y = try? files.attributesOfItem(atPath: b.path) else { return false }
+    return (x[.systemFileNumber] as? Int) == (y[.systemFileNumber] as? Int)
+        && (x[.systemNumber] as? Int) == (y[.systemNumber] as? Int)
+}
+
 /// Room on the destination's disk (N8).
 public enum DiskSpace {
     /// The MacMusic WAV's size for `seconds` of sound, plus a margin.
     public static func macMusicBytes(seconds: Double) -> Int64 {
         Int64(seconds * Double(MacMusicFormat.byteRate)) + 1_048_576
+    }
+
+    /// An MP3's size at 192 kbps, plus a margin (M1).
+    public static func mp3Bytes(seconds: Double) -> Int64 {
+        Int64(seconds * Double(MP3Format.bitRate) / 8) + 1_048_576
     }
 
     public static func available(at folder: URL) -> Int64? {

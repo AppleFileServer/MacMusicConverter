@@ -8,8 +8,9 @@ second, 8-bit), and optionally into MP3s.
 shared engine converts local files to MacMusic WAVs, optionally
 normalised and with long silence trimmed from the ends, through the
 developer's command-line tool, `mmt-convert` (BUILDING.md); checked
-against MacMusic's own import rules, and confirmed in MacMusic. MP3
-output comes in Stage 3, the window in Stage 4.
+against MacMusic's own import rules, and confirmed in MacMusic. Stage 3
+added MP3s (192 kbps) and both outputs from one job. The window comes in
+Stage 4.
 
 ## Building
 

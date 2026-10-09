@@ -1135,3 +1135,45 @@ MacMusic (Mini vMac, then the real Plus).
   start) in 1.4 s; the WAV peaks at −1.9 dBFS (mono from stereo).
 - **Not tested end to end:** running out of disk space (the estimate is
   unit-tested; a full disk is for Stage 6's hardening).
+
+## 18.8 Stage 3 decisions (2026-10-09, approved by the owner)
+
+- **M1, the bitrate:** MP3s are always 192 kbps CBR; no choice of
+  bitrate. **Deviation from §5.3** (its "small selection").
+- **M2, MP3 from an MP3:** the engine stops before doing anything
+  (`needsReencodeConfirmation`) unless the job carries the user's
+  confirmation; `mmt-convert` explains and needs `--reencode`; Stage 4's
+  window will ask. The WAV alone needs no confirmation.
+- **M3, the MP3's title:** the same title as the WAV, as an ID3v2.3 tag,
+  every character kept; no title, no tag.
+- **M4, what the MP3 keeps:** stereo whenever the source has two or more
+  channels (more are mixed down to two); a mono source stays mono (the
+  owner: "stereo if possible"). The source's sample rate where MPEG
+  allows it, else the nearest below (96 kHz becomes 48 kHz). The same
+  trim and gain as the WAV. Named like the WAV, with ".mp3", without the
+  31-character limit (it never goes to the Mac).
+- **M5, two outputs:** each made in its own FFmpeg run, from the same
+  source with the same trim and gain, so one failing can't stop the
+  other; one analysis. One failing: the other kept, the job "completed
+  with errors" (§2.3). Retrieved once: Stage 5 (YouTube).
+- **M6, the MP3's checks:** ffprobe reads MP3, about 192 kbps, the rate
+  and channels asked for, the title; a clean decode; the length, from
+  the MP3's own decode; a warning if encoding took its peak past full
+  scale.
+- **M7, the choice:** MP3 only, WAV only, or both (§4.2);
+  `mmt-convert --wav | --mp3 | --both` (the WAV by default).
+
+## 18.9 Stage 3 findings (2026-10-09)
+
+- **The source protected even from "replace" (§9.3):** an output named
+  like its source, in the same folder (this Mac's disk ignores case, so
+  "Both.wav" is "both.wav"), was refused under "refuse", but would have
+  been overwritten under "replace". Now an output whose name is the
+  source itself always gets the next free name. Found by the tests.
+- **Cancelling keeps what's finished (§11.2):** `cancelled` now carries
+  the outputs already moved into place; outputs are converted, then all
+  checked, then moved, so a cancel before the last step keeps nothing.
+- **The real song, both outputs:** "Good Luck, Babe!" as a WAV (4.7 MB)
+  and an MP3 (5.2 MB, stereo, 44.1 kHz, 192 kbps, titled), both
+  215.01 s after the same trim and gain. Without `--reencode`,
+  `mmt-convert` stopped and wrote nothing.

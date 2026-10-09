@@ -34,6 +34,20 @@ struct Fixtures {
         return out
     }
 
+    /// A 16-bit WAV (CD-like) made from an FFmpeg source description: a
+    /// source that isn't an MP3, so an MP3 can be made from it without the
+    /// re-encoding question.
+    @discardableResult
+    func pcm(_ name: String, source: String, rate: Int = 44_100, channels: Int = 2) async throws -> URL {
+        let out = url(name)
+        let r = try await ProcessRunner().run(tools.ffmpeg, arguments: [
+            "-nostdin", "-v", "error", "-f", "lavfi", "-i", source,
+            "-ar", String(rate), "-ac", String(channels), "-c:a", "pcm_s16le", out.path,
+        ])
+        guard r.status == 0 else { throw FixtureError.ffmpeg(r.stderrText) }
+        return out
+    }
+
     /// An MP3 of a sound given as an FFmpeg expression of t (aevalsrc), for
     /// shaped tests: silent stretches, set levels. One expression per
     /// channel, separated by "|".

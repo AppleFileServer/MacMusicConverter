@@ -114,7 +114,7 @@ import Testing
         let job = Task { try await run(mp3, normalise) }
         try await Task.sleep(for: .milliseconds(300))
         job.cancel()
-        await #expect(throws: ConversionError.cancelled) { try await job.value }
+        await #expect(throws: ConversionError.cancelled(kept: [])) { try await job.value }
         let left = try FileManager.default.contentsOfDirectory(atPath: f.folder.path)
         #expect(left.filter { $0.hasSuffix(".wav") || $0.hasSuffix(".partial") }.isEmpty, "\(left)")
     }
@@ -125,7 +125,7 @@ import Testing
             withUnsafeCurrentTask { $0?.cancel() }
             return try await run(mp3)
         }
-        await #expect(throws: ConversionError.cancelled) { try await job.value }
+        await #expect(throws: ConversionError.cancelled(kept: [])) { try await job.value }
     }
 
     @Test func stagesInOrder() async throws {

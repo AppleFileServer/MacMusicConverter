@@ -11,15 +11,23 @@ public struct ConversionJob: Sendable {
     public var title: String?
     public var options: ConversionOptions
     public var conflict: ConflictPolicy
+    /// What to make (§4.2; M7).
+    public var outputs: OutputSelection
+    /// The user has agreed to re-encode an MP3 source as a new MP3 (§2.5;
+    /// M2). Without it, such a job stops before doing anything.
+    public var reencodeConfirmed: Bool
 
     public init(source: URL, outputFolder: URL, name: String? = nil, title: String? = nil,
-                options: ConversionOptions = ConversionOptions(), conflict: ConflictPolicy = .refuse) {
+                options: ConversionOptions = ConversionOptions(), conflict: ConflictPolicy = .refuse,
+                outputs: OutputSelection = .wav, reencodeConfirmed: Bool = false) {
         self.source = source
         self.outputFolder = outputFolder
         self.name = name
         self.title = title
         self.options = options
         self.conflict = conflict
+        self.outputs = outputs
+        self.reencodeConfirmed = reencodeConfirmed
     }
 
     /// The name the output is based on.
@@ -56,6 +64,21 @@ public enum JobStage: String, Sendable, Equatable {
 
 public enum OutputKind: String, Sendable {
     case macMusicWAV = "MacMusic WAV"
+    case mp3 = "MP3"
+}
+
+/// The three choices of §4.2.
+public enum OutputSelection: String, Sendable, CaseIterable {
+    case mp3, wav, both
+
+    /// In the order they're made: the WAV first, the app's main purpose.
+    public var kinds: [OutputKind] {
+        switch self {
+        case .mp3: [.mp3]
+        case .wav: [.macMusicWAV]
+        case .both: [.macMusicWAV, .mp3]
+        }
+    }
 }
 
 /// One output's outcome, reported on its own (§4.1, §2.3).
@@ -65,7 +88,10 @@ public struct OutputResult: Sendable {
     public let url: URL?
     public let problems: [String]
     public let warnings: [String]
+    /// The WAV's reading by MacMusic's rules (the WAV only).
     public let report: MacMusicWAVReport?
+    /// ffprobe's reading of the finished file.
+    public let checked: AudioInfo?
     public let size: Int64?
     /// The output's own peak, in dBFS.
     public let peak: Double?
@@ -93,5 +119,8 @@ public enum ConversionError: Error, Equatable, Sendable {
     case insufficientSpace(needed: Int64, available: Int64)
     case conversionFailed(String)
     case toolMissing(String)
-    case cancelled
+    /// An MP3 from an MP3 needs the user's say-so (M2); nothing was done.
+    case needsReencodeConfirmation
+    /// Cancelled; any outputs already finished and checked are kept (§11.2).
+    case cancelled(kept: [String])
 }

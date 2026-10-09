@@ -9,6 +9,22 @@ public struct AudioInfo: Sendable, Equatable {
     public let channels: Int
     public let bitsPerSample: Int
     public let duration: Double?
+    /// The stream's (or else the file's) bit rate, in bits a second.
+    public let bitRate: Int?
+    /// The file's title tag, if it has one.
+    public let title: String?
+
+    public init(formatName: String, codec: String, sampleRate: Int, channels: Int,
+                bitsPerSample: Int, duration: Double?, bitRate: Int? = nil, title: String? = nil) {
+        self.formatName = formatName
+        self.codec = codec
+        self.sampleRate = sampleRate
+        self.channels = channels
+        self.bitsPerSample = bitsPerSample
+        self.duration = duration
+        self.bitRate = bitRate
+        self.title = title
+    }
 }
 
 public enum AudioInspectorError: Error, Equatable, Sendable {
@@ -40,10 +56,13 @@ public struct AudioInspector: Sendable {
                 let channels: Int?
                 let bits_per_sample: Int?
                 let duration: String?
+                let bit_rate: String?
             }
             struct Format: Decodable {
                 let format_name: String?
                 let duration: String?
+                let bit_rate: String?
+                let tags: [String: String]?
             }
             let streams: [Stream]?
             let format: Format?
@@ -56,6 +75,8 @@ public struct AudioInspector: Sendable {
             sampleRate: Int(stream.sample_rate ?? "") ?? 0,
             channels: stream.channels ?? 0,
             bitsPerSample: stream.bits_per_sample ?? 0,
-            duration: Double(stream.duration ?? probe.format?.duration ?? ""))
+            duration: Double(stream.duration ?? probe.format?.duration ?? ""),
+            bitRate: Int(stream.bit_rate ?? probe.format?.bit_rate ?? ""),
+            title: probe.format?.tags?.first { $0.key.lowercased() == "title" }?.value)
     }
 }
