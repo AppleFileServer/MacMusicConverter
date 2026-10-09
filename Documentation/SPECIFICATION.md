@@ -1090,3 +1090,48 @@ MacMusic (Mini vMac, then the real Plus).
   played in MacMusic under Mini vMac by the owner (2026-10-09): it plays,
   and the title came in from the WAV. **Stage 1's acceptance criterion is
   met.** Still to do: the same on the real Macintosh Plus.
+
+## 18.6 Stage 2 decisions (2026-10-09, approved by the owner)
+
+- **N1, the analysis:** FFmpeg decodes the source to 32-bit float at its
+  own rate and channels and streams it into Swift, which measures the
+  real length, each channel's peak, the silent ends and any broken
+  (NaN or infinite) samples, sample by sample. Not `volumedetect` or
+  `silencedetect` logs.
+- **N2, the gain:** once, from the source's loudest channel, before the
+  mixdown, in float; it may raise or lower; default target −1 dBFS; the
+  same gain for every output (Stage 3's MP3 too). Neither output can
+  clip; a mono WAV from uneven channels may peak below the target, and
+  the result says so.
+- **N3, quiet sources:** a peak below −50 dBFS: normalisation skipped,
+  and why. Otherwise the gain is capped at +20 dB, and the cap reported.
+- **N4, the trim (S7):** silence means every channel below −50 dBFS,
+  sample by sample; longer than 2 s (or 3 s) at an end, it's cut to a
+  half-second gap; never the middle; an all-silent source isn't trimmed
+  away; reported. Applied before the gain.
+- **N5, progress:** stages now (validating, analysing, converting,
+  validating outputs, then completed, completed with errors, failed or
+  cancelled); percentages in Stage 4.
+- **N6, PCM settings:** the MacMusic format only; §4.3's alternative PCM
+  presets are left out of version 1 (MacMusic accepts only the one).
+  **Deviation from §4.3.**
+- **N7, names:** made safe (no slashes, colons, control characters or
+  leading dots; letters the Mac can't show transliterated); the WAV's
+  name at most 31 characters with ".wav", cut at a word where it can be;
+  a taken name is refused, given the next free name ("Song 2.wav"), or
+  replaced (only once the user confirms, Stage 4). `mmt-convert` takes
+  the next free name.
+- **N8, free space:** the WAV's size (1.3 MB a minute plus 1 MB) checked
+  against the destination's free space before converting.
+
+## 18.7 Stage 2 findings (2026-10-09)
+
+- **`Process.waitUntilExit` hung** on a background thread after the tool
+  had exited (seen while streaming). The runner now waits on the
+  termination handler, and finishes when both the output has been read
+  to its end and the tool has exited.
+- **The real song:** "Good Luck, Babe!" normalised (−0.9 dB: its peak
+  was −0.1 dBFS) and trimmed (3.3 s of silence at the end, none at the
+  start) in 1.4 s; the WAV peaks at −1.9 dBFS (mono from stereo).
+- **Not tested end to end:** running out of disk space (the estimate is
+  unit-tested; a full disk is for Stage 6's hardening).

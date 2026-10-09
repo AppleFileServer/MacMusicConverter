@@ -1,6 +1,8 @@
 import Foundation
 @testable import MacMusicTransferKit
 
+enum FixtureError: Error { case ffmpeg(String) }
+
 /// Test files, made on the spot by FFmpeg (decision S4: no music in the
 /// repository), in a fresh folder for each test.
 struct Fixtures {
@@ -28,8 +30,19 @@ struct Fixtures {
             "-ar", String(rate), "-ac", String(channels),
             "-c:a", "libmp3lame", "-b:a", bitrate, out.path,
         ])
-        precondition(r.status == 0, r.stderrText)
+        guard r.status == 0 else { throw FixtureError.ffmpeg(r.stderrText) }
         return out
+    }
+
+    /// An MP3 of a sound given as an FFmpeg expression of t (aevalsrc), for
+    /// shaped tests: silent stretches, set levels. One expression per
+    /// channel, separated by "|".
+    @discardableResult
+    func shaped(_ name: String, _ expression: String, seconds: Double) async throws -> URL {
+        let channels = expression.split(separator: "|").count
+        // Quoted: its commas would otherwise end the filter.
+        return try await mp3(name, source: "aevalsrc='\(expression)':d=\(seconds):s=44100",
+                             channels: channels, bitrate: "192k")
     }
 
     /// A WAV header and body written byte by byte.

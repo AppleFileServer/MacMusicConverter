@@ -60,4 +60,5 @@ the converter uses FFmpeg's own at high-quality settings (§18.5).
 ## The developer's converter
 
     swift build -c release --product mmt-convert     # with SDKROOT set, as above
-    .build/release/mmt-convert <input> <output.wav> [--title "Title"]
+    .build/release/mmt-convert <input> <output folder> [--title "Title"] [--name "File name"] \
+        [--normalise [dBFS]] [--trim [2|3]]

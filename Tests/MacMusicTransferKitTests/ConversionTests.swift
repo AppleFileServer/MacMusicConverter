@@ -2,19 +2,29 @@ import Foundation
 import Testing
 @testable import MacMusicTransferKit
 
-/// Real conversions with FFmpeg, from fixtures made on the spot (§13.2).
+/// Real conversions through the engine, from fixtures made on the spot
+/// (§13.2), with no options: the plain conversion.
 @Suite struct ConversionTests {
     let f: Fixtures
-    let converter: MacMusicConverter
+    let engine: ConversionEngine
     init() throws {
         f = try Fixtures()
-        converter = MacMusicConverter(tools: f.tools)
+        engine = ConversionEngine(tools: f.tools)
     }
 
-    func convert(_ input: URL, title: String? = nil) async throws -> MacMusicConversionResult {
-        try await converter.convert(MacMusicConversion(
-            input: input, output: f.url(input.deletingPathExtension().lastPathComponent + ".wav"),
-            title: title))
+    /// The finished WAV of a successful job.
+    struct Converted {
+        let result: JobResult
+        var output: OutputResult { result.outputs[0] }
+        var report: MacMusicWAVReport { output.report! }
+        var url: URL { output.url! }
+        var warnings: [String] { output.warnings }
+    }
+
+    func convert(_ input: URL, title: String? = nil) async throws -> Converted {
+        let r = try await engine.run(ConversionJob(source: input, outputFolder: f.folder, title: title))
+        #expect(r.stage == .completed, "\(r.outputs.first?.problems ?? [])")
+        return Converted(result: r)
     }
 
     @Test func stereoMP3() async throws {
@@ -22,8 +32,8 @@ import Testing
         let r = try await convert(mp3, title: "A Tone")
         #expect(r.report.accepted)
         #expect(r.report.title == "A Tone")
+        #expect(r.url.lastPathComponent == "A Tone.wav")       // named after the title
         #expect(abs(r.report.duration - 3) < 0.1)
-        #expect(r.checked.codec == "pcm_u8")
     }
 
     @Test func monoAnd48k() async throws {
@@ -52,8 +62,8 @@ import Testing
         func peak(_ url: URL) throws -> Int {
             try f.samples(url).map { abs(Int($0) - 128) }.max() ?? 0
         }
-        let full = try peak(try await convert(both).output)
-        let half = try peak(try await convert(right).output)
+        let full = try peak(try await convert(both).url)
+        let half = try peak(try await convert(right).url)
         #expect(full > 80, "a 3/4-scale tone peaked at \(full)")
         #expect(abs(Double(half) / Double(full) - 0.5) < 0.1, "right only: \(half) of \(full)")
     }
@@ -62,14 +72,16 @@ import Testing
         let quiet = try await f.mp3("silent.mp3", source: "anullsrc=r=44100:cl=stereo:d=2")
         let r = try await convert(quiet)
         #expect(r.report.accepted && abs(r.report.duration - 2) < 0.1)
-        let samples = try f.samples(r.output)
+        let samples = try f.samples(r.url)
         #expect(samples.allSatisfy { abs(Int($0) - 128) <= 1 })   // dither only
     }
 
     @Test func corruptInputIsRefused() async throws {
         let junk = f.url("junk.mp3")
         try Data((0..<5000).map { UInt8(truncatingIfNeeded: $0 &* 7919) }).write(to: junk)
-        await #expect(throws: ConversionError.self) { try await convert(junk) }
+        await #expect(throws: ConversionError.self) {
+            try await engine.run(ConversionJob(source: junk, outputFolder: f.folder))
+        }
         #expect(!FileManager.default.fileExists(atPath: f.url("junk.wav").path))
     }
 
@@ -91,7 +103,9 @@ import Testing
         let before = try Data(contentsOf: mp3)
         let existing = f.url("keep.wav")
         try Data("mine".utf8).write(to: existing)
-        await #expect(throws: ConversionError.outputExists(existing.path)) { try await convert(mp3) }
+        await #expect(throws: ConversionError.outputExists(existing.path)) {
+            try await engine.run(ConversionJob(source: mp3, outputFolder: f.folder))
+        }
         #expect(try Data(contentsOf: existing) == Data("mine".utf8))
         #expect(try Data(contentsOf: mp3) == before)
         let left = try FileManager.default.contentsOfDirectory(atPath: f.folder.path)

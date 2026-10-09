@@ -4,33 +4,75 @@ import MacMusicTransferKit
 // mmt-convert: converts one audio file into a WAV MacMusic can import
 // (decision S5; a developer's tool until the app's window does it).
 //
-//   mmt-convert <input> <output.wav> [--title "Title"]
+//   mmt-convert <input> <output folder> [--title "Title"] [--name "File name"]
+//               [--normalise [dBFS]] [--trim [2|3]]
+//
+// A name that's taken gets the next free one ("Song 2.wav").
 
+let usage = "usage: mmt-convert <input> <output folder> [--title T] [--name N] [--normalise [dBFS]] [--trim [2|3]]\n"
 var args = Array(CommandLine.arguments.dropFirst())
-var title: String?
-if let i = args.firstIndex(of: "--title"), i + 1 < args.count {
-    title = args[i + 1]
-    args.removeSubrange(i...(i + 1))
+var options = ConversionOptions()
+var title: String?, name: String?
+
+@MainActor func value(after flag: String) -> String? {
+    guard let i = args.firstIndex(of: flag) else { return nil }
+    let next = i + 1 < args.count ? args[i + 1] : nil
+    if let next, !next.hasPrefix("--") {
+        args.removeSubrange(i...(i + 1))
+        return next
+    }
+    args.remove(at: i)
+    return ""
+}
+if let t = value(after: "--title") { title = t }
+if let n = value(after: "--name") { name = n }
+if let n = value(after: "--normalise") {
+    options.normalise = true
+    if let dB = Double(n) { options.target = dB }
+}
+if let t = value(after: "--trim") {
+    options.trimSilence = true
+    if let s = Double(t) { options.trimThreshold = s }
 }
 guard args.count == 2 else {
-    FileHandle.standardError.write(Data("usage: mmt-convert <input> <output.wav> [--title \"Title\"]\n".utf8))
+    FileHandle.standardError.write(Data(usage.utf8))
     exit(2)
 }
 
 do {
-    let converter = MacMusicConverter(tools: try Tools.locate())
-    let result = try await converter.convert(MacMusicConversion(
-        input: URL(fileURLWithPath: args[0]), output: URL(fileURLWithPath: args[1]), title: title))
-    let s = result.source
-    print("source:  \(s.codec), \(s.sampleRate) Hz, \(s.channels) channel(s)"
-          + (s.duration.map { String(format: ", %.2f s", $0) } ?? ""))
-    let r = result.report
-    print("output:  \(result.output.path)")
-    print("         PCM \(r.bitsPerSample)-bit, \(r.sampleRate) Hz, \(r.channels) channel, "
-          + String(format: "%.2f s, %d bytes of audio", r.duration, r.dataLength))
-    print("         title: \(r.title ?? "(none)")")
-    print("checks:  MacMusic's rules passed; ffprobe reads \(result.checked.codec); decodes cleanly")
-    for w in result.warnings { print("warning: \(w)") }
+    let engine = ConversionEngine(tools: try Tools.locate())
+    let job = ConversionJob(source: URL(fileURLWithPath: args[0]),
+                            outputFolder: URL(fileURLWithPath: args[1]),
+                            name: name, title: title, options: options, conflict: .uniqueName)
+    let result = try await engine.run(job) { stage in print("  \(stage.rawValue)") }
+    let s = result.source, a = result.analysis
+    print("source:  \(s.codec), \(s.sampleRate) Hz, \(s.channels) channel(s), "
+          + String(format: "%.2f s decoded, peak %.1f dBFS", a.duration, 20 * log10(Double(max(a.peak, 1e-9)))))
+    switch result.normalisation {
+    case .off: break
+    case .skipped(let why): print("normalise: skipped. \(why)")
+    case .gain(let dB, let capped):
+        print(String(format: "normalise: %+.1f dB", dB) + (capped ? " (the most allowed)" : ""))
+    }
+    if let t = result.trim {
+        if let note = t.note { print("trim:    \(note)") }
+        else { print(String(format: "trim:    %.1f s from the start, %.1f s from the end", t.cutFromStart, t.cutFromEnd)) }
+    }
+    for o in result.outputs {
+        if let url = o.url, let r = o.report {
+            print("output:  \(url.path)")
+            print("         \(o.kind.rawValue): \(r.bitsPerSample)-bit, \(r.sampleRate) Hz, \(r.channels) channel, "
+                  + String(format: "%.2f s, %d bytes", r.duration, o.size ?? 0)
+                  + (o.peak.map { String(format: ", peak %.1f dBFS", $0) } ?? ""))
+            print("         title: \(r.title ?? "(none)")")
+        } else {
+            print("output:  \(o.kind.rawValue) FAILED")
+        }
+        for p in o.problems { print("problem: \(p)") }
+        for w in o.warnings { print("warning: \(w)") }
+    }
+    print("result:  \(result.stage.rawValue)")
+    exit(result.stage == .completed ? 0 : 1)
 } catch {
     FileHandle.standardError.write(Data("mmt-convert: \(error)\n".utf8))
     exit(1)

@@ -2,6 +2,14 @@
 
 ## 0.1.0 (in development)
 
+- Stage 2, the shared conversion engine: the job model and its stages;
+  one streamed analysis pass (real length, peaks, silent ends, broken
+  samples); optional peak normalisation (−1 dBFS, +20 dB at most,
+  silence left alone); the owner's optional silence trimming (ends only,
+  over 2 or 3 s, cut to half a second); safe names within the Mac's 31
+  characters, with conflict policies; a free-space check; cancelling
+  that leaves nothing behind. `mmt-convert --normalise --trim`. 51 tests.
+
 - Stage 1, the PCM proof of concept: the process runner, the tool
   locator, the ffprobe inspector, the title as MacMusic stores it, the
   WAV chunk reader, a validator applying MacMusic's import rules, and
