@@ -1385,6 +1385,9 @@ signature; the owner's saved preferences read as before.
 - **The packaged app is self-contained:** its self-test, on a copy
   outside the repository with its own tools only, passed (both outputs
   checked), and left nothing running.
+- **The owner's acceptance run** on the release candidate (from
+  Applications): "I've checked the app and it runs very well"
+  (TESTING.md). **Stage 7's acceptance criterion is met; version 1.0.**
 
 ## 18.19 The icon (2026-10-09, chosen by the owner)
 

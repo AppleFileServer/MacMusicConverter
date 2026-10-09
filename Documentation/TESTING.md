@@ -110,3 +110,15 @@ On the release's app, unzipped and dragged to Applications:
 
 Optional, when you next use the Plus: steps 2-3 on the real Macintosh
 Plus (outstanding since Stage 1).
+
+### The 1.0 acceptance run (2026-10-09)
+
+On the release candidate made from commit 87879f4
+(`~/MacPlusProjects/releases/MacMusic-Converter-Utility-1.0/`), unzipped
+and installed in Applications by the owner: "I've checked the app and it
+runs very well." Recorded as given; the steps weren't reported one by
+one. Checked before it by the release script: 97 tests, and the
+self-test on a copy outside the repository with the app's own tools.
+Earlier, in development: the owner's import and playback in MacMusic
+(Mini vMac) of a converted WAV (Stage 1), and the window's checks 1-12
+(Stages 4-6). Still optional: a WAV on the real Macintosh Plus.
