@@ -8,6 +8,8 @@
 	<string>MacMusic Converter Utility</string>
 	<key>CFBundleIdentifier</key>
 	<string>local.macmusic.transfer</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
 	<key>CFBundleExecutable</key>
 	<string>MacMusicConverter</string>
 	<key>CFBundlePackageType</key>

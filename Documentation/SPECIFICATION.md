@@ -1385,3 +1385,15 @@ signature; the owner's saved preferences read as before.
 - **The packaged app is self-contained:** its self-test, on a copy
   outside the repository with its own tools only, passed (both outputs
   checked), and left nothing running.
+
+## 18.19 The icon (2026-10-09, chosen by the owner)
+
+A classic compact computer, drawn as a generic one (its true layout: a
+case about 0.71 wide to tall, the screen in a bezel above, the floppy
+slot right of centre, a plain square badge at the lower left where the
+real one has its logo; no Apple logo), its screen showing a 1-bit note,
+with a convert badge in the MacMusic manual's red, #e0442b, on a warm
+beige rounded square. Chosen from three concepts and revised once at the
+owner's direction. The source is `Resources/Icon/AppIcon.svg`;
+`tools/make-icon.sh` makes `Resources/AppIcon.icns` (all ten sizes, kept
+in the repository), which the app's Info.plist names (`CFBundleIconFile`).

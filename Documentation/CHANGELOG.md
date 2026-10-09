@@ -2,6 +2,10 @@
 
 ## 1.0 (2026-10-09)
 
+- The app's icon: a compact computer showing a 1-bit note, with a convert
+  badge in the manual's red (`Resources/Icon/AppIcon.svg`,
+  `tools/make-icon.sh`).
+
 - Stage 7, packaging: FFmpeg, ffprobe, yt-dlp and Deno inside the app
   (Contents/Helpers), keeping their signatures: the app is
   self-contained. `--self-test`. `tools/make-release.sh` (tests, the app,

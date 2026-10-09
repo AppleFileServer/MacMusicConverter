@@ -92,7 +92,8 @@ copy outside the repository.
 
 On the release's app, unzipped and dragged to Applications:
 
-1. It opens from Applications; Advanced shows FFmpeg, yt-dlp and Deno
+1. It shows its icon (the compact computer with the red badge) in
+   Applications and the Dock, and opens from Applications; Advanced shows FFmpeg, yt-dlp and Deno
    inside the app (`…/MacMusic Converter Utility.app/Contents/Helpers`).
 2. **A local MP3 to a MacMusic WAV**; the WAV's details (its row) are
    right.

@@ -24,7 +24,7 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/MacMusicConverter"
 sed "s/@VERSION@/$VERSION/g" Resources/Info.plist > "$APP/Contents/Info.plist"
-cp Resources/THIRD-PARTY-NOTICES.md "$APP/Contents/Resources/"
+cp Resources/THIRD-PARTY-NOTICES.md Resources/AppIcon.icns "$APP/Contents/Resources/"
 
 # The tools (P1), as pinned (BUILDING.md); -p keeps them as they are.
 mkdir -p "$APP/Contents/Helpers"

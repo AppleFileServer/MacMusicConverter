@@ -78,5 +78,5 @@ The app bundle (`tools/build-app.sh`):
       MacOS/MacMusicConverter          the app (and --self-test)
       Helpers/ffmpeg, ffprobe          FFmpeg 9.0.2
       Helpers/yt-dlp, deno             yt-dlp 2026.08.19, Deno 2.9.7
-      Resources/THIRD-PARTY-NOTICES.md
+      Resources/THIRD-PARTY-NOTICES.md, AppIcon.icns
       Info.plist                       local.macmusic.transfer (R2), version

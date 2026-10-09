@@ -22,6 +22,13 @@ either. Naming it works:
 
 `tools/test.sh` and `tools/build-app.sh` do this themselves.
 
+## The icon
+
+`Resources/Icon/AppIcon.svg` is the design; `tools/make-icon.sh` remakes
+`Resources/AppIcon.icns` from it (headless Chrome, from the MacMusic
+manual's tools; `sips`; `iconutil`). Only after changing the design: the
+`.icns` is in the repository, so building doesn't need Chrome.
+
 ## Releases
 
 `tools/make-release.sh` (RELEASES.md).
