@@ -162,6 +162,12 @@ public struct ConversionEngine: Sendable {
             shared.append(String(format: "The source says it lasts %.1f s, but only %.1f s of it could be read: it may be damaged or cut short.",
                                  said, analysis.duration))
         }
+        // A decoded source can peak above full scale (YouTube's Opus often
+        // does); without a lowering gain its loudest moments are clipped.
+        if analysis.peak > 1, normalisation.dB >= 0 {
+            shared.append(String(format: "The source peaks above full scale (%+.1f dBFS), so its loudest moments are clipped slightly. Normalise would lower it.",
+                                 20 * log10(Double(analysis.peak))))
+        }
         if let title = job.title, !title.trimmingCharacters(in: .whitespaces).isEmpty,
            MacMusicText.infoTitle(title) == nil, kinds.contains(.macMusicWAV) {
             shared.append("The title has nothing MacMusic can show, so the WAV has none.")

@@ -1209,3 +1209,65 @@ MacMusic (Mini vMac, then the real Plus).
 
 - The owner tried the window's checks (TESTING.md): "seems perfect".
   Stage 4's acceptance criterion is met.
+
+## 18.12 Stage 5 decisions (2026-10-09, approved by the owner)
+
+- **Y1, the tools:** yt-dlp 2026.08.19 (`yt-dlp_macos`) and Deno 2.9.7
+  (yt-dlp now needs a JavaScript runtime for full YouTube support; Deno
+  is its recommended one), pinned in `~/MacPlusProjects/transfer-tools/`
+  behind "current" links, checked against their releases' checksums.
+  `tools/update-yt-dlp.sh` fetches the latest yt-dlp, checks it, shows
+  its version, and moves the link only if the user agrees.
+- **Y2, the flow:** paste a URL; Look Up reads the details only (title,
+  channel, length; the title fills the Title box); Convert downloads the
+  audio-only stream at its own quality into a temporary folder, once;
+  the same engine converts it into every output asked for; the download
+  is deleted.
+- **Y3, addresses:** one video, from youtube.com/watch?v=, youtu.be/,
+  youtube.com/shorts/ (and /live/, /embed/), m. and music.youtube.com,
+  youtube-nocookie.com/embed/; a playlist in the address is dropped (and
+  yt-dlp is given --no-playlist); the video passed to yt-dlp as its plain
+  address, after "--".
+- **Y4, restrictions (§8.3):** no sign-in, no browser cookies, no config
+  files; the embedded-player client, which can get round age
+  restrictions, switched off; private, members-only, age-restricted,
+  region-blocked or unavailable videos stop with a plain explanation.
+  The window says "Only for videos you own or have permission to save."
+- **Y5, progress:** a Retrieving stage with yt-dlp's percentage (its
+  --progress-template); cancelling stops yt-dlp, and the temporary
+  folder, part-download and all, is deleted.
+- **Y6, errors:** yt-dlp's ERROR lines sorted into unavailable, private,
+  sign-in needed, region-blocked, network, yt-dlp needs updating, or
+  failed; its words under Details.
+- **Y7, an MP3 from YouTube:** no re-encode question (YouTube's audio
+  is Opus or AAC, not MP3); a note in Advanced that a compressed source
+  made into an MP3 can't be improved by it.
+- **Y8, tests:** offline, with the normal suite, through a stand-in
+  yt-dlp (a script answering with ready-made details and copying a
+  fixture); a live test, run only when MMT_LIVE_YOUTUBE_URL is set.
+
+## 18.13 Stage 5 findings (2026-10-09)
+
+- **yt-dlp's build includes its JavaScript part** (`yt_dlp_ejs` 0.8.0);
+  only Deno is needed besides. Its debug output shows Deno in use.
+- **A look-up of the owner's URL** (with `&list=RD...&start_radio=1`)
+  read the one video, not the radio playlist: Louis Armstrong, "We Have
+  All The Time In The World", uploaded by a third-party channel; best
+  audio Opus at 48 kHz, about 130 kbps. Nothing downloaded: the owner
+  was asked to confirm they may save this video, and gave another.
+- **The live test video:** "Chill Dreamy Lounge" by unfeel, from the
+  artist's own channel, offered as "No Copyright Music" for creators
+  (its URL also carries a playlist, dropped). The live test passed; with
+  `mmt-convert --both --normalise --trim`: retrieved once (Opus, 48 kHz,
+  117 s), 3.0 s trimmed from the end, both outputs 114.00 s, in 22 s,
+  the temporary download deleted. **Stage 5's acceptance criterion is
+  met.**
+- **YouTube's audio can peak above full scale** (+1.4 dBFS here, from
+  the Opus decode). Normalise lowered it; without Normalise its loudest
+  moments would be clipped, so the result now warns when the source
+  peaks above full scale and no lowering gain is applied (a test added).
+- **Long titles make clipped WAV names** ("Chill Dreamy Lounge by.wav"
+  within the Mac's 31 characters); the File name box gives a better one.
+- **A sorting order mattered:** "Requested format is not available"
+  (yt-dlp out of date) must be tested before "is not available" (the
+  video gone). Found by the tests.

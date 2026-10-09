@@ -16,6 +16,9 @@ public struct ConversionJob: Sendable {
     /// The user has agreed to re-encode an MP3 source as a new MP3 (§2.5;
     /// M2). Without it, such a job stops before doing anything.
     public var reencodeConfirmed: Bool
+    /// What the source is called, when its file's name means nothing (a
+    /// download's): the video's title, for the output's name.
+    public var sourceName: String?
 
     public init(source: URL, outputFolder: URL, name: String? = nil, title: String? = nil,
                 options: ConversionOptions = ConversionOptions(), conflict: ConflictPolicy = .refuse,
@@ -28,12 +31,14 @@ public struct ConversionJob: Sendable {
         self.conflict = conflict
         self.outputs = outputs
         self.reencodeConfirmed = reencodeConfirmed
+        self.sourceName = nil
     }
 
     /// The name the output is based on.
     public var baseName: String {
         if let name, !name.trimmingCharacters(in: .whitespaces).isEmpty { return name }
         if let title, !title.trimmingCharacters(in: .whitespaces).isEmpty { return title }
+        if let sourceName, !sourceName.trimmingCharacters(in: .whitespaces).isEmpty { return sourceName }
         return source.deletingPathExtension().lastPathComponent
     }
 }
@@ -56,9 +61,9 @@ public struct ConversionOptions: Sendable, Equatable {
     }
 }
 
-/// Where a job has got to (§7.1). Stage 3 adds retrieval for YouTube.
+/// Where a job has got to (§7.1); retrieving only for YouTube.
 public enum JobStage: String, Sendable, Equatable {
-    case validating, analysing, converting, validatingOutputs
+    case retrieving, validating, analysing, converting, validatingOutputs
     case completed, completedWithErrors, failed, cancelled
 }
 

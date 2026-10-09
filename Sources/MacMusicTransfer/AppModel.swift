@@ -19,10 +19,22 @@ final class AppModel {
     var title = ""
     var name = ""
 
+    // A YouTube source (Stage 5).
+    var urlText = ""
+    var video: YouTubeVideo?
+    var details: VideoDetails?
+    var lookingUp = false
+    var lookUpProblem: UserMessage?
+    private var lookUpTask: Task<Void, Never>?
+
     // The tools, found at launch.
     var tools: Tools?
     var toolsProblem: UserMessage?
     var ffmpegVersion = ""
+    var youTubeTools: YouTubeTools?
+    var youTubeProblem: UserMessage?
+    var ytdlpVersion = ""
+    var denoVersion = ""
 
     // The job.
     var running = false
@@ -50,6 +62,57 @@ final class AppModel {
             Task {
                 let out = try? await ProcessRunner().run(tools.ffmpeg, arguments: ["-hide_banner", "-version"])
                 ffmpegVersion = out?.stdoutText.split(separator: "\n").first.map(String.init) ?? ""
+            }
+            do {
+                let yt = try YouTubeTools.locate(tools: tools)
+                youTubeTools = yt
+                Task {
+                    let y = try? await ProcessRunner().run(yt.ytdlp, arguments: ["--version"])
+                    ytdlpVersion = y?.stdoutText.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    let d = try? await ProcessRunner().run(yt.deno, arguments: ["--version"])
+                    denoVersion = d?.stdoutText.split(separator: "\n").first.map(String.init) ?? ""
+                }
+            } catch let error as YouTubeError {
+                youTubeProblem = error.message
+            } catch {
+                youTubeProblem = YouTubeError.toolMissing("\(error)").message
+            }
+        }
+    }
+
+    // MARK: A YouTube source
+
+    func urlChanged() {
+        lookUpTask?.cancel()
+        video = nil
+        details = nil
+        lookUpProblem = nil
+        result = nil
+        jobMessage = nil
+    }
+
+    func lookUp() {
+        urlChanged()
+        switch YouTubeVideo.parse(urlText) {
+        case .failure(let problem):
+            lookUpProblem = problem.message
+        case .success(let v):
+            guard let yt = youTubeTools else { lookUpProblem = youTubeProblem; return }
+            video = v
+            lookingUp = true
+            lookUpTask = Task {
+                do {
+                    let d = try await YouTubeSource(tools: yt).lookUp(v)
+                    guard video == v else { return }
+                    details = d
+                    title = d.title
+                    name = ""
+                } catch let error as YouTubeError {
+                    if case .cancelled = error {} else if video == v { lookUpProblem = error.message }
+                } catch {
+                    if video == v { lookUpProblem = YouTubeError.failed("\(error)").message }
+                }
+                lookingUp = false
             }
         }
     }
@@ -89,16 +152,26 @@ final class AppModel {
         }
     }
 
-    var sourceIsMP3: Bool { sourceInfo?.codec == "mp3" }
+    var sourceIsMP3: Bool { mode == .local && sourceInfo?.codec == "mp3" }
 
     // MARK: The job
 
     func job(_ selection: OutputSelection, conflict: ConflictPolicy = .refuse) -> ConversionJob? {
-        guard let source else { return nil }
-        return ConversionJob(source: source, outputFolder: prefs.folder,
-                             name: name.isEmpty ? nil : name, title: title.isEmpty ? nil : title,
-                             options: prefs.options, conflict: conflict,
-                             outputs: selection, reencodeConfirmed: reencodeConfirmed)
+        let from: URL
+        switch mode {
+        case .local:
+            guard let source else { return nil }
+            from = source
+        case .youtube:
+            guard let video, details != nil else { return nil }
+            from = video.url                       // replaced by the download
+        }
+        var job = ConversionJob(source: from, outputFolder: prefs.folder,
+                                name: name.isEmpty ? nil : name, title: title.isEmpty ? nil : title,
+                                options: prefs.options, conflict: conflict,
+                                outputs: selection, reencodeConfirmed: reencodeConfirmed)
+        if mode == .youtube { job.sourceName = details?.title }
+        return job
     }
 
     /// The "Saves as" line.
@@ -107,7 +180,13 @@ final class AppModel {
         return OutputPreview.plan(job)
     }
 
-    var canConvert: Bool { !running && tools != nil && sourceInfo != nil }
+    var canConvert: Bool {
+        guard !running, tools != nil else { return false }
+        switch mode {
+        case .local: return sourceInfo != nil
+        case .youtube: return youTubeTools != nil && details != nil && !lookingUp
+        }
+    }
 
     /// Convert: ask about re-encoding, then about taken names, then start.
     func convert() {
@@ -161,16 +240,26 @@ final class AppModel {
         result = nil
         jobMessage = nil
         progress = JobProgress(stage: .validating)
+        let youTube = mode == .youtube ? (video, details, youTubeTools) : (nil, nil, nil)
         task = Task {
             do {
-                let r = try await ConversionEngine(tools: tools).run(job) { p in
+                let report: @Sendable (JobProgress) -> Void = { p in
                     Task { @MainActor in if self.running { self.progress = p } }
+                }
+                let engine = ConversionEngine(tools: tools)
+                let r: JobResult
+                if let v = youTube.0, let yt = youTube.2 {
+                    r = try await engine.run(youTube: v, details: youTube.1, using: yt, job: job, onProgress: report)
+                } else {
+                    r = try await engine.run(job, onProgress: report)
                 }
                 result = r
                 if r.stage == .failed {
                     jobMessage = UserMessage(summary: "The conversion didn't produce a usable file.", detail: nil)
                 }
             } catch let error as ConversionError {
+                jobMessage = error.message
+            } catch let error as YouTubeError {
                 jobMessage = error.message
             } catch {
                 jobMessage = UserMessage(summary: "Something went wrong.", detail: "\(error)")

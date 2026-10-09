@@ -18,10 +18,7 @@ struct MainWindowView: View {
             .padding(.bottom, 4)
             .disabled(model.running)
 
-            switch model.mode {
-            case .local: local
-            case .youtube: youtube
-            }
+            form
         }
         .frame(minWidth: 540, minHeight: 600)
         .dropDestination(for: URL.self) { urls, _ in
@@ -56,29 +53,18 @@ struct MainWindowView: View {
         return "\(names) already \(model.conflicts.count == 1 ? "exists" : "exist") in “\(model.prefs.folder.lastPathComponent)”"
     }
 
-    // MARK: YouTube (Stage 5)
+    // MARK: The form
 
-    var youtube: some View {
-        VStack(spacing: 12) {
-            Spacer()
-            Image(systemName: "play.rectangle").font(.system(size: 40)).foregroundStyle(.tertiary)
-            Text("Coming soon").font(.title3.bold())
-            Text("Converting a YouTube video you're entitled to save.")
-                .foregroundStyle(.secondary)
-            Spacer()
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    // MARK: Local file
-
-    var local: some View {
+    var form: some View {
         VStack(spacing: 0) {
             Form {
                 if let problem = model.toolsProblem {
                     Section { MessageView(message: problem, symbol: "xmark.octagon.fill", tint: .red) }
                 }
-                sourceSection
+                switch model.mode {
+                case .local: sourceSection
+                case .youtube: youtubeSection
+                }
                 outputSection
                 soundSection
                 folderSection
@@ -119,6 +105,37 @@ struct MainWindowView: View {
         }
     }
 
+    /// A YouTube video (Y2-Y4): the address, Look Up, its details.
+    var youtubeSection: some View {
+        Section("YouTube Video") {
+            if let problem = model.youTubeProblem {
+                MessageView(message: problem, symbol: "xmark.octagon.fill", tint: .red)
+            }
+            HStack {
+                TextField("Address", text: $model.urlText, prompt: Text("https://www.youtube.com/watch?v=…"))
+                    .labelsHidden()
+                    .onSubmit { model.lookUp() }
+                    .onChange(of: model.urlText) { model.urlChanged() }
+                Button("Look Up") { model.lookUp() }
+                    .disabled(model.urlText.trimmingCharacters(in: .whitespaces).isEmpty || model.lookingUp
+                              || model.youTubeTools == nil)
+            }
+            if model.lookingUp {
+                HStack { ProgressView().controlSize(.small); Text("Looking it up…").foregroundStyle(.secondary) }
+            } else if let d = model.details {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(d.title).font(.headline)
+                    Text([d.channel, d.duration.map { duration($0) }].compactMap { $0 }.joined(separator: " · "))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            } else if let problem = model.lookUpProblem {
+                MessageView(message: problem, symbol: "exclamationmark.triangle.fill", tint: .orange)
+            }
+            Label("Only for videos you own or have permission to save.", systemImage: "hand.raised")
+                .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
     var outputSection: some View {
         Section("Output") {
             Picker("Make", selection: $model.prefs.selection) {
@@ -135,7 +152,8 @@ struct MainWindowView: View {
             TextField("Title", text: $model.title, prompt: Text("Shown in MacMusic when you import it"))
             TextField("File name", text: $model.name,
                       prompt: Text(model.title.isEmpty
-                                   ? (model.source?.deletingPathExtension().lastPathComponent ?? "From the title or the source")
+                                   ? (model.mode == .youtube ? (model.details?.title ?? "From the video's title")
+                                      : model.source?.deletingPathExtension().lastPathComponent ?? "From the title or the source")
                                    : model.title))
             if !model.savesAs.isEmpty {
                 LabeledContent("Saves as") {
@@ -201,7 +219,13 @@ struct MainWindowView: View {
                     }
                 }
                 LabeledContent("MacMusic WAV", value: "22,050 Hz · mono · 8-bit (fixed: what MacMusic plays)")
-                LabeledContent("MP3", value: "192 kbps · stereo if the source is")
+                LabeledContent("MP3") {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("192 kbps · stereo if the source is")
+                        Text("A compressed source (an MP3, or YouTube's audio) made into an MP3 can't be improved by it.")
+                            .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.trailing)
+                    }
+                }
                 LabeledContent("FFmpeg") {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(model.ffmpegVersion.isEmpty ? "—" : model.ffmpegVersion).lineLimit(1)
@@ -211,6 +235,8 @@ struct MainWindowView: View {
                         }
                     }
                 }
+                LabeledContent("yt-dlp", value: model.ytdlpVersion.isEmpty ? "—" : model.ytdlpVersion)
+                LabeledContent("Deno", value: model.denoVersion.isEmpty ? "—" : model.denoVersion)
                 LabeledContent("Version", value: AppVersion.string)
             }
         }
@@ -267,6 +293,7 @@ struct MainWindowView: View {
     func describe(_ p: JobProgress) -> String {
         let what: String
         switch p.stage {
+        case .retrieving: what = "Retrieving the audio from YouTube"
         case .validating: what = "Checking the file"
         case .analysing: what = "Analysing the sound"
         case .converting: what = p.output == .mp3 ? "Making the MP3" : "Making the MacMusic WAV"

@@ -38,7 +38,8 @@ with a `MANIFEST.txt` (versions, URLs, checksums, signatures):
 | Tool | Version | From |
 |---|---|---|
 | FFmpeg, ffprobe | 9.0.2, static, arm64 (GPL) | Martin Riedl's builds, ffmpeg.martin-riedl.de |
-| yt-dlp | (Stage 5) | |
+| yt-dlp | 2026.08.19, `yt-dlp_macos` (Unlicense) | github.com/yt-dlp/yt-dlp releases; behind the link `transfer-tools/yt-dlp` |
+| Deno | 2.9.7, aarch64 (MIT) | github.com/denoland/deno releases; behind the link `transfer-tools/deno` |
 
 The engine finds them (`Tools.locate`) in: the folder `MMT_TOOLS_BIN`
 names; the app's `Contents/Resources/bin` (Stage 7); then
@@ -54,11 +55,20 @@ To fetch them again:
     unzip -o ffmpeg.zip -d ../bin; unzip -o ffprobe.zip -d ../bin
     spctl -a -t install -vv ../bin/ffmpeg     # "Notarized Developer ID", Martin Riedl
 
+yt-dlp needs updating whenever YouTube changes ("yt-dlp may need
+updating", in the app). Never silently:
+
+    tools/update-yt-dlp.sh      # fetches, checks the checksum, shows the version, asks
+
+The app finds yt-dlp and Deno (`YouTubeTools.locate`) in: `MMT_TOOLS_BIN`
+(`yt-dlp`, `deno`); the app's `Contents/Resources/bin`; then
+`transfer-tools/yt-dlp/yt-dlp_macos` and `transfer-tools/deno/deno`.
+
 This build has no SoX resampler (it isn't configured with libsoxr), so
 the converter uses FFmpeg's own at high-quality settings (§18.5).
 
 ## The developer's converter
 
     swift build -c release --product mmt-convert     # with SDKROOT set, as above
-    .build/release/mmt-convert <input> <output folder> [--title "Title"] [--name "File name"] \
+    .build/release/mmt-convert <input file or YouTube address> <output folder> [--title "Title"] [--name "File name"] \
         [--normalise [dBFS]] [--trim [2|3]] [--wav | --mp3 | --both] [--reencode]

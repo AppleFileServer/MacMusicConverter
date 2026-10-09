@@ -24,7 +24,7 @@ as each stage adds to it.
 
 External tools run through one process runner, with argument arrays.
 
-## Now (Stage 4)
+## Now (Stage 5)
 
 | File | Does |
 |---|---|
@@ -43,14 +43,17 @@ External tools run through one process runner, with argument arrays.
 | `ConversionEngine` | the shared engine (§7.2): validate (and ask before re-encoding an MP3), analyse, decide once, convert each output in its own FFmpeg run into a temporary file beside its destination, check each (the WAV: MacMusic's rules, ffprobe, a decode, the length; the MP3: ffprobe, the title, a decode, the length, the peak), move the passing ones into place; reports its stages; per-output results; cancellable, keeping only finished outputs |
 | `JobProgress` | stage and fraction (W6); FFmpeg's `-progress` read; a throttle (once a percent) |
 | `Preferences`, `OutputPreview`, `UserMessages` | what's remembered (W7); the "Saves as" names and the taken ones (W4); plain messages for every error (§11.3) |
-| `mmt-convert` | the developer's command-line converter (S5), with `--normalise`, `--trim`, `--wav`/`--mp3`/`--both` and `--reencode` |
+| `YouTubeURL` | one video from a pasted address; playlists dropped (Y3) |
+| `YouTubeSource` | the yt-dlp adapter (§8.2): the only code that knows yt-dlp's arguments and output; look-up, audio retrieval with progress, error sorting (Y6); `YouTubeTools` finds yt-dlp and Deno |
+| `YouTubeJob` | retrieves once into a temporary folder, then runs the engine on the download; deletes it (Y2) |
+| `mmt-convert` | the developer's command-line converter (S5), with `--normalise`, `--trim`, `--wav`/`--mp3`/`--both` and `--reencode`; a YouTube address in place of a file |
 
 The app (target `MacMusicTransfer`):
 
 | File | Does |
 |---|---|
 | `AppModel` | the window's state (`@Observable`, main actor): the source and its reading, the job and its progress, the questions; runs the engine in a task |
-| `MainWindowView` | the window: Mode, Source, Output, Sound, Save To, Advanced, Results, the action bar; the two alerts; dropping a file |
+| `MainWindowView` | the window: Mode, Source or YouTube Video, Output, Sound, Save To, Advanced, Results, the action bar; the two alerts; dropping a file |
 
 The WAV's conversion, as FFmpeg arguments: the first audio stream only,
 no metadata, `atrim` (the kept part), `volume` (the gain, in float), `pan`

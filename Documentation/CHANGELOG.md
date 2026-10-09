@@ -2,6 +2,14 @@
 
 ## 0.1.0 (in development)
 
+- Stage 5, YouTube: paste one video's address (a playlist in it
+  dropped), Look Up its details, Convert: its audio retrieved once,
+  converted to the WAV, the MP3 or both, the download deleted; no
+  sign-in, cookies or age workaround; plain messages for what yt-dlp
+  reports. yt-dlp 2026.08.19 and Deno 2.9.7 pinned;
+  `tools/update-yt-dlp.sh`. 82 tests, offline, plus a live one on
+  request.
+
 - Stage 4, the window: Local File mode (YouTube "coming soon"): choose or
   drop a file; MacMusic WAV, MP3 or both; title and file name, with the
   names it'll save as; normalise and trim; the save folder

@@ -10,9 +10,10 @@ normalised and with long silence trimmed from the ends, through the
 developer's command-line tool, `mmt-convert` (BUILDING.md); checked
 against MacMusic's own import rules, and confirmed in MacMusic. Stage 3
 added MP3s (192 kbps) and both outputs from one job; Stage 4, the
-window. YouTube comes in Stage 5.
+window; Stage 5, YouTube.
 
-Using it: open the app, choose or drop a sound file, pick MacMusic WAV,
+Using it: open the app, choose or drop a sound file (or, in YouTube,
+paste the address of a video you may save and Look Up), pick MacMusic WAV,
 MP3 or both, type a title, and Convert. The files go to
 `~/Music/MacMusic Transfer` unless you choose another folder. Then copy
 the WAV to the Mac and import it in MacMusic.

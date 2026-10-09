@@ -54,6 +54,23 @@ import Testing
         #expect(r.outputs[0].warnings.contains { $0.contains("channels differ") })
     }
 
+    /// A source over full scale, not normalised: warned about; normalised,
+    /// lowered and not warned about.
+    @Test func overFullScaleIsWarnedAbout() async throws {
+        var samples = Data()
+        for i in 0..<16_000 {
+            let x: Float = 1.2 * sin(Float(i) / 5)
+            withUnsafeBytes(of: x.bitPattern.littleEndian) { samples.append(contentsOf: $0) }
+        }
+        let wav = try f.wav("hot.wav", format: 3, rate: 8_000, bits: 32, blockAlign: 4, byteRate: 32_000,
+                            data: samples)
+        let plain = try await run(wav)
+        #expect(plain.outputs[0].warnings.contains { $0.contains("above full scale") })
+        let lowered = try await run(wav, normalise)        // named "hot 3.wav": the others are taken
+        #expect(lowered.normalisation.dB < 0)
+        #expect(!lowered.outputs[0].warnings.contains { $0.contains("above full scale") })
+    }
+
     @Test func longSilenceIsTrimmed() async throws {
         // Silent 0-4 s, a tone 4-7 s, silent 7-10 s.
         let mp3 = try await f.shaped("gaps.mp3", "if(between(t,4,7),0.5*sin(2*PI*440*t),0)", seconds: 10)
