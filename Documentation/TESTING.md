@@ -16,6 +16,7 @@ need the pinned FFmpeg (BUILDING.md) but no network and no music files.
 | `MacMusicTextTests` (6) | the title as MacMusic will store it: plain titles kept; curly punctuation made plain; Latin-1 letters kept, others transliterated (Ł, Cyrillic); cut to 63; blank gives none; file names over 31 characters or with a colon |
 | `ValidatorTests` (5) | MacMusic's import rules against hand-made WAVs: a good file passes; not a WAV; stereo, 44.1 kHz, 16-bit, extensible, inconsistent, no data, empty data and an iPod chunk all refused; a chunk past the end; an appended title read back |
 | `ProcessingTests` (9) | the gain (to the target, lowering, the +20 dB cap, silence skipped) and the trim (cut to a gap, short silence kept, 2 s vs 3 s, all-silent), and the filter's order |
+| `LoudnessTests` (9 tests, 17 cases) | the meter (L2): a full-scale 1 kHz sine reads −3.01 LUFS at 22.05, 44.1, 48 and 96 kHz; the level follows the amplitude; silence, under 400 ms and below −70 LUFS read as none; silence around a tone gated out (edge blocks counted as the standard says); a passage 20 LU down left out, one 6 LU down counted; FFmpeg's `ebur128` on the mono mix agrees within 0.1 LU on six sources (pink and brown noise, bass, treble, mono and stereo, 22.05-48 kHz, level steps with silence); a silent source has none |
 | `NamingTests` (4) | unsafe characters, path tricks, hidden names, transliteration; names within 31 characters, cut at a word; refuse, next free name, replace; the space estimate |
 | `EngineTests` (15) | a source over full scale warned about unless lowered; normalising a quiet tone to −1 dBFS, lowering a full-scale one, the cap, near-silence left alone, uneven channels warned about; trimming 4 s and 3 s ends, the 3 s threshold, silence in the middle kept, trimming off; conflict policies; NaN samples refused; cancelling mid-job and before starting, leaving nothing; the stages in order; missing source and destination |
 | `DualOutputTests` (11) | MP3 only (192 kbps, stereo, the title, the name); both from one job; both sharing the gain and trim (same length, both at −1 dBFS); mono, surround, 48 and 96 kHz sources; an MP3 from an MP3 refused unconfirmed, nothing written, then confirmed; one output failing (each way) keeping the other, both failing; any characters in the MP3's title; no title, no tag; cancelling with both; the source never replaced, not even by case; the MP3 rates |
@@ -32,6 +33,8 @@ unfeel (No Copyright Music, the artist's channel), in about 25 s. The live test,
 
     MMC_LIVE_YOUTUBE_URL="https://www.youtube.com/watch?v=..." tools/test.sh --filter live Fixtures that aren't MP3s (so an MP3 can be
 made from them unasked) are 16-bit WAVs.
+
+1.1, Stage 1 (2026-11-04): 106 tests, all passing, in about 13 s. Checked by hand, outside the tests (no music in the repository, S4): 13 of the owner's songs, read by the meter and by FFmpeg's `ebur128`, agree to FFmpeg's one decimal place (−12.6 to −20.2 LUFS).
 
 Not covered yet: a full disk (the estimate is tested; Stage 6).
 

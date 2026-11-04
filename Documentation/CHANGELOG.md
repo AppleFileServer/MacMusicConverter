@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1 (in development)
+
+- Stage 1, the loudness meter (SPECIFICATION.md §18.20, L2): every
+  source's loudness is measured, by ITU-R BS.1770-4 / EBU R128, on the
+  mono mix the WAV is made from. Not yet used: Loudness levelling comes
+  in Stage 2.
+
 ## 1.0 (2026-10-09)
 
 - The app's icon: a compact computer showing a 1-bit note, with a convert

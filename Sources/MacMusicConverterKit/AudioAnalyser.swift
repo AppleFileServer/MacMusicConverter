@@ -15,6 +15,9 @@ public struct AudioAnalysis: Sendable, Equatable {
     public let lastSound: Int?
     /// Samples that are NaN or infinite: a damaged decode.
     public let brokenSamples: Int
+    /// The mono mix's integrated loudness in LUFS (L2), or nil if nothing
+    /// passes the gates (shorter than 400 ms, or silent).
+    public var loudness: Double? = nil
 
     public var duration: Double { Double(frames) / Double(max(sampleRate, 1)) }
     public var peak: Float { channelPeaks.max() ?? 0 }
@@ -35,7 +38,7 @@ public struct AudioAnalyser: Sendable {
     /// how far it has got, 0 to 1, through `progress`.
     public func analyse(_ url: URL, sampleRate: Int, channels: Int, expectedFrames: Int? = nil,
                         progress: (@Sendable (Double) -> Void)? = nil) async throws -> AudioAnalysis {
-        let meter = Meter(channels: max(channels, 1))
+        let meter = Meter(channels: max(channels, 1), sampleRate: sampleRate)
         meter.expected = expectedFrames
         meter.progress = progress
         let result = try await runner.stream(tools.ffmpeg, arguments: [
@@ -61,10 +64,12 @@ public struct AudioAnalyser: Sendable {
         var leftover = Data()
         var expected: Int?
         var progress: (@Sendable (Double) -> Void)?
+        var loudness: LoudnessMeter
 
-        init(channels: Int) {
+        init(channels: Int, sampleRate: Int) {
             self.channels = channels
             peaks = Array(repeating: 0, count: channels)
+            loudness = LoudnessMeter(sampleRate: sampleRate)
         }
 
         func add(_ piece: Data) {
@@ -79,13 +84,18 @@ public struct AudioAnalyser: Sendable {
                 var i = 0
                 while i < count {
                     var loud = false
+                    var mix = 0.0
                     for c in 0..<channels {
                         let x = raw.loadUnaligned(fromByteOffset: (i + c) * 4, as: Float.self)
                         if !x.isFinite { broken += 1; continue }
+                        mix += Double(x)
                         let a = abs(x)
                         if a > peaks[c] { peaks[c] = a }
                         if a > AudioAnalyser.silenceThreshold { loud = true }
                     }
+                    // L2: the mono mix, the channels averaged as the WAV's
+                    // filter averages them (a broken sample counts as 0).
+                    loudness.add(mix / Double(channels))
                     if loud {
                         if firstSound == nil { firstSound = frames }
                         lastSound = frames
@@ -102,7 +112,7 @@ public struct AudioAnalyser: Sendable {
         func result(sampleRate: Int) -> AudioAnalysis {
             AudioAnalysis(sampleRate: sampleRate, channels: channels, frames: frames,
                           channelPeaks: peaks, firstSound: firstSound, lastSound: lastSound,
-                          brokenSamples: broken)
+                          brokenSamples: broken, loudness: loudness.integrated)
         }
     }
 }

@@ -1400,3 +1400,68 @@ beige rounded square. Chosen from three concepts and revised once at the
 owner's direction. The source is `Resources/Icon/AppIcon.svg`;
 `tools/make-icon.sh` makes `Resources/AppIcon.icns` (all ten sizes, kept
 in the repository), which the app's Info.plist names (`CFBundleIconFile`).
+
+## 18.20 Version 1.1 decisions: loudness levelling (2026-11-04, approved by the owner)
+
+Why: MacMusic's volume is already at the Plus's hardware maximum (its
+level 7), and songs peak near full scale, so they can only sound louder
+if their average level is raised. Thirteen of the owner's songs measured
+−20.2 to −12.6 LUFS (median about −17).
+
+- **L1, the choice:** Off, Peak (1.0's Normalise, unchanged) or
+  Loudness. **Off by default.** A saved Normalise setting becomes Peak.
+  `mmc-convert` gains `--loudness [LUFS]` beside `--normalise`.
+- **L2, the measurement:** integrated loudness by ITU-R BS.1770-4 / EBU
+  R128 (K-weighting; 400 ms blocks every 100 ms; −70 LUFS absolute gate;
+  −10 LU relative gate), computed in Swift in the analysis pass (as N1).
+  It's measured on **the mono mix** (the channels averaged, as the WAV's
+  filter mixes them), because that is what the Plus plays: a stereo
+  measurement of a centred mix reads 3 LU louder than the mono WAV.
+  Checked against FFmpeg's `ebur128` in the tests (within 0.1 LU).
+- **L3, the target:** −12 LUFS by default (the owner), adjustable −16
+  to −8 in Advanced.
+- **L4, the gain:** target minus measured, once, in float, before the
+  mixdown (as N2); +20 dB at most, and nothing for a source that never
+  rises above −50 dBFS (as N3), reported.
+- **L5, the limiter:** FFmpeg's `alimiter` at −1 dBFS (attack 5 ms,
+  release 50 ms, `level=0` so it adds no gain of its own, `latency=1` so
+  the length is unchanged), after resampling in float and before the
+  dither to 8-bit: `volume`, `pan`, `aresample` (float), `alimiter`,
+  `aresample` (u8, triangular dither). Tried on 2026-11-04 on a −20.2
+  LUFS song: −12.3 LUFS out, peak −0.9 dBFS, length identical.
+- **L6, the MP3:** the same gain and limiter, so the outputs match.
+- **L7, the report:** the measured loudness, the gain, and the most the
+  limiter had to take off; over 6 dB, a warning that the song may sound
+  squashed.
+- **L8, the checks:** the WAV peaks no higher than −1 dBFS (allowing the
+  dither's step), is within 1 LU of the target, and keeps its length.
+- **L9, the release:** version 1.1, made and released by RELEASES.md's
+  steps (the tests, the self-test, the owner's acceptance run, tag
+  `v1.1`), with the README, RELEASE-NOTES, CHANGELOG, ARCHITECTURE and
+  TESTING brought up to date.
+
+Stages: **1** the meter (L2); **2** the engine (L3-L8) and
+`mmc-convert`; **3** the window (L1, L7); **4** the owner's listening
+test on the Plus (Off, Peak and Loudness on the same songs); **5** the
+1.1 release (L9).
+
+Not in the Converter: songs already in a MacMusic library get louder
+only by converting them again and replacing them (their ratings and
+playlist places go with the old copies); and *MacMusic Utilities*,
+Chapter 2, describes Normalise: a note for MacMusic's own sessions.
+
+## 18.21 Version 1.1, Stage 1 findings (2026-11-04)
+
+- The meter (`LoudnessMeter.swift`, fed by `AudioAnalyser`) designs the
+  K-weighting filter for the source's own rate by the bilinear transform
+  (the standard gives coefficients only for 48 kHz); a full-scale 1 kHz
+  sine reads −3.01 LUFS at 22.05 to 96 kHz.
+- FFmpeg's `ebur128`, on the same mono mix, agrees within 0.1 LU on six
+  test sources, and on 13 of the owner's songs (checked outside the
+  tests) to its one printed decimal.
+- Blocks straddling a silence count at part strength when within 10 LU of
+  the rest, as the standard says: silence around a short sound lowers its
+  reading slightly (a 3 s tone in silence reads 0.41 LU low). Songs are
+  minutes long, so this is negligible for them.
+- The analysis pass now does a little more work per sample (two
+  filters); no slower in the tests (106 in about 13 s, as 97 were).

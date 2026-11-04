@@ -35,7 +35,8 @@ External tools run through one process runner, with argument arrays.
 | `MacMusicText` | the title as MacMusic will store it; file-name limits |
 | `WAVFile` | walks a WAV's chunks as MacMusic does; appends the title (LIST/INFO/INAM) |
 | `MacMusicWAVValidator` | MacMusic's import rules, one by one (T5) |
-| `AudioAnalyser` | one streamed pass over the decoded source: real length, peaks, silent ends, broken samples (N1) |
+| `AudioAnalyser` | one streamed pass over the decoded source: real length, peaks, silent ends, broken samples (N1), and the mono mix's loudness (L2) |
+| `LoudnessMeter` | integrated loudness by ITU-R BS.1770-4 / EBU R128: the K-weighting filter designed for any rate, 400 ms blocks every 100 ms, the absolute and relative gates (L2) |
 | `Processing` | the decisions: `Normalisation` (N2, N3) and `Trim` (N4), plain arithmetic |
 | `OutputNaming`, `DiskSpace` | safe names, the 31-character WAV name, conflicts (N7); free space (N8) |
 | `ConversionJob` | the job, its options, stages, per-output results and errors (§7.1) |
