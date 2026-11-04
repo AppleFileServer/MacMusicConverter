@@ -24,9 +24,42 @@ public enum Normalisation: Sendable, Equatable {
         return .gain(dB: needed, capped: false)
     }
 
+    /// L4: from the mono mix's loudness, to reach `target` LUFS; the same
+    /// +20 dB cap, and nothing for a source that never rises above
+    /// −50 dBFS (N3) or that the meter finds no loudness in.
+    public static func decide(loudness: Double?, peak: Float, target: Double) -> Normalisation {
+        guard peak.isFinite, peak > AudioAnalyser.silenceThreshold, let loudness, loudness.isFinite else {
+            return .skipped(reason: "The source is too quiet to level: it never rises above −50 dBFS.")
+        }
+        let needed = target - loudness
+        if needed > maximumGain { return .gain(dB: maximumGain, capped: true) }
+        return .gain(dB: needed, capped: false)
+    }
+
     public var dB: Double {
         if case .gain(let dB, _) = self { return dB }
         return 0
+    }
+}
+
+/// L5, L7: what the limiter is expected to take off the loudest peak, in
+/// dB: the source's loudest channel after the gain, above the ceiling. It
+/// bounds the WAV's figure (the mono mix's peak can only be lower).
+public enum Limiter {
+    /// L7: more than this, and the song may sound squashed.
+    public static let warnAbove = 6.0
+
+    public static func reduction(peak: Float, gain: Double,
+                                 ceiling: Double = ConversionOptions.ceiling) -> Double {
+        guard peak.isFinite, peak > 0 else { return 0 }
+        return max(0, 20 * log10(Double(peak)) + gain - ceiling)
+    }
+
+    /// FFmpeg's alimiter at the ceiling: 5 ms attack, 50 ms release, no
+    /// gain of its own (level=0), and its delay taken back (latency=1) so
+    /// the length is unchanged.
+    public static func filter(ceiling: Double = ConversionOptions.ceiling) -> String {
+        String(format: "alimiter=limit=%.6f:attack=5:release=50:level=0:latency=1", pow(10, ceiling / 20))
     }
 }
 

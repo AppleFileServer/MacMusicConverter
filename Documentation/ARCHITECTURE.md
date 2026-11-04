@@ -15,9 +15,9 @@ as each stage adds to it.
 
     source (local file | YouTube via yt-dlp)
         -> inspect (ffprobe)
-        -> decode to 32-bit float, analyse the peak (if normalising)
-        -> one gain decision
-        -> branch: MacMusic WAV (resample, downmix, dither, 8-bit) | MP3
+        -> decode to 32-bit float, analyse the peaks and the loudness
+        -> one gain decision (Peak or Loudness)
+        -> branch: MacMusic WAV (gain, downmix, resample, [limiter], dither, 8-bit) | MP3 (gain, [limiter])
         -> write to a temporary file
         -> validate (ffprobe, and MacMusic's own rules)
         -> move into place
@@ -37,7 +37,7 @@ External tools run through one process runner, with argument arrays.
 | `MacMusicWAVValidator` | MacMusic's import rules, one by one (T5) |
 | `AudioAnalyser` | one streamed pass over the decoded source: real length, peaks, silent ends, broken samples (N1), and the mono mix's loudness (L2) |
 | `LoudnessMeter` | integrated loudness by ITU-R BS.1770-4 / EBU R128: the K-weighting filter designed for any rate, 400 ms blocks every 100 ms, the absolute and relative gates (L2) |
-| `Processing` | the decisions: `Normalisation` (N2, N3) and `Trim` (N4), plain arithmetic |
+| `Processing` | the decisions: `Normalisation` (N2, N3; by loudness, L4), `Limiter` (what it takes off, its FFmpeg settings; L5, L7) and `Trim` (N4), plain arithmetic |
 | `OutputNaming`, `DiskSpace` | safe names, the 31-character WAV name, conflicts (N7); free space (N8) |
 | `ConversionJob` | the job, its options, stages, per-output results and errors (§7.1) |
 | `MP3Format` | the MP3: 192 kbps, the rates MPEG allows, stereo if the source has two or more channels (M1, M4) |
@@ -50,7 +50,7 @@ External tools run through one process runner, with argument arrays.
 | `YouTubeURL` | one video from a pasted address; playlists dropped (Y3) |
 | `YouTubeSource` | the yt-dlp adapter (§8.2): the only code that knows yt-dlp's arguments and output; look-up, audio retrieval with progress, error sorting (Y6); `YouTubeTools` finds yt-dlp and Deno |
 | `YouTubeJob` | retrieves once into a temporary folder, then runs the engine on the download; deletes it (Y2) |
-| `mmc-convert` | the developer's command-line converter (S5), with `--normalise`, `--trim`, `--wav`/`--mp3`/`--both` and `--reencode`; a YouTube address in place of a file |
+| `mmc-convert` | the developer's command-line converter (S5), with `--normalise`, `--loudness`, `--trim`, `--wav`/`--mp3`/`--both` and `--reencode`; a YouTube address in place of a file |
 
 The app (target `MacMusicConverter`):
 

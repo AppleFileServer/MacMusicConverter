@@ -5,12 +5,15 @@ import MacMusicConverterKit
 // (decision S5; a developer's tool until the app's window does it).
 //
 //   mmc-convert <input file or YouTube address> <output folder> [--title "Title"] [--name "File name"]
-//               [--normalise [dBFS]] [--trim [2|3]] [--wav | --mp3 | --both] [--reencode]
+//               [--normalise [dBFS] | --loudness [LUFS]] [--trim [2|3]] [--wav | --mp3 | --both] [--reencode]
+//
+// --normalise sets the loudest peak (1.0's Normalise, Peak in the window);
+// --loudness sets the loudness, −12 LUFS unless given, with a limiter (L1).
 //
 // A name that's taken gets the next free one ("Song 2.wav"). An MP3 from
 // an MP3 needs --reencode (decision M2).
 
-let usage = "usage: mmc-convert <input> <output folder> [--title T] [--name N] [--normalise [dBFS]] [--trim [2|3]] [--wav | --mp3 | --both] [--reencode]\n"
+let usage = "usage: mmc-convert <input> <output folder> [--title T] [--name N] [--normalise [dBFS] | --loudness [LUFS]] [--trim [2|3]] [--wav | --mp3 | --both] [--reencode]\n"
 var args = Array(CommandLine.arguments.dropFirst())
 var options = ConversionOptions()
 var title: String?, name: String?
@@ -30,6 +33,10 @@ if let n = value(after: "--name") { name = n }
 if let n = value(after: "--normalise") {
     options.normalise = true
     if let dB = Double(n) { options.target = dB }
+}
+if let n = value(after: "--loudness") {
+    options.levelling = .loudness
+    if let lufs = Double(n) { options.loudnessTarget = lufs }
 }
 if let t = value(after: "--trim") {
     options.trimSilence = true
@@ -79,18 +86,22 @@ do {
     let s = result.source, a = result.analysis
     print("source:  \(s.codec), \(s.sampleRate) Hz, \(s.channels) channel(s), "
           + String(format: "%.2f s decoded, peak %.1f dBFS", a.duration, 20 * log10(Double(max(a.peak, 1e-9)))))
+    if let l = a.loudness { print(String(format: "         loudness %.1f LUFS (the mono mix)", l)) }
+    let how = result.levelling == .loudness ? "loudness" : "normalise"
     switch result.normalisation {
     case .off: break
-    case .skipped(let why): print("normalise: skipped. \(why)")
+    case .skipped(let why): print("\(how): skipped. \(why)")
     case .gain(let dB, let capped):
-        print(String(format: "normalise: %+.1f dB", dB) + (capped ? " (the most allowed)" : ""))
+        print(String(format: "\(how): %+.1f dB", dB) + (capped ? " (the most allowed)" : "")
+              + (result.limited.map { String(format: "; the limiter takes off up to %.1f dB", $0) } ?? ""))
     }
     if let t = result.trim {
         if let note = t.note { print("trim:    \(note)") }
         else { print(String(format: "trim:    %.1f s from the start, %.1f s from the end", t.cutFromStart, t.cutFromEnd)) }
     }
     for o in result.outputs {
-        let peak = o.peak.map { String(format: ", peak %.1f dBFS", $0) } ?? ""
+        let peak = (o.peak.map { String(format: ", peak %.1f dBFS", $0) } ?? "")
+            + (o.loudness.map { String(format: ", %.1f LUFS", $0) } ?? "")
         if let url = o.url, let r = o.report {
             print("output:  \(url.path)")
             print("         \(o.kind.rawValue): \(r.bitsPerSample)-bit, \(r.sampleRate) Hz, \(r.channels) channel, "

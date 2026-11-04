@@ -6,6 +6,11 @@
   source's loudness is measured, by ITU-R BS.1770-4 / EBU R128, on the
   mono mix the WAV is made from. Not yet used: Loudness levelling comes
   in Stage 2.
+- Stage 2, the engine (§18.20, L3-L8): Loudness levelling, with a
+  limiter at −1 dBFS, for the WAV and the MP3; the result gives the
+  source's loudness, the gain, what the limiter takes off (a warning over
+  6 dB) and each output's loudness; `mmc-convert --loudness [LUFS]`.
+  Peak (1.0's Normalise) is unchanged.
 
 ## 1.0 (2026-10-09)
 

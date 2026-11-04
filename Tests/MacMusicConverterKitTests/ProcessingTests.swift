@@ -64,4 +64,66 @@ import Testing
         #expect(order == order.sorted())
         #expect(!ConversionEngine.filter(channels: 1).contains("pan"))
     }
+
+    // MARK: - Loudness (L1, L4, L5)
+
+    @Test func loudnessGainReachesTheTarget() {
+        #expect(Normalisation.decide(loudness: -20, peak: 0.5, target: -12) == .gain(dB: 8, capped: false))
+    }
+
+    @Test func loudSongsAreLoweredToo() {
+        #expect(Normalisation.decide(loudness: -8, peak: 1, target: -12) == .gain(dB: -4, capped: false))
+    }
+
+    @Test func loudnessGainIsCapped() {
+        #expect(Normalisation.decide(loudness: -40, peak: 0.05, target: -12) == .gain(dB: 20, capped: true))
+    }
+
+    @Test func silenceIsNotLevelled() {
+        guard case .skipped = Normalisation.decide(loudness: -60, peak: 0.001, target: -12) else {
+            Issue.record("a source under −50 dBFS was levelled"); return
+        }
+        guard case .skipped = Normalisation.decide(loudness: nil, peak: 0.5, target: -12) else {
+            Issue.record("a source with no loudness was levelled"); return
+        }
+    }
+
+    @Test func limiterReduction() {
+        // −6.02 dBFS raised 8 dB is 1.98 dBFS: 2.98 dB over −1.
+        #expect(abs(Limiter.reduction(peak: 0.5, gain: 8) - 2.98) < 0.01)
+        #expect(Limiter.reduction(peak: 0.1, gain: 3) == 0)              // −17 dBFS: under
+        #expect(Limiter.reduction(peak: 0, gain: 20) == 0)
+    }
+
+    @Test func limiterSettings() {
+        let f = Limiter.filter()
+        #expect(f.hasPrefix("alimiter=limit=0.891251"))                  // −1 dBFS
+        #expect(f.contains("attack=5") && f.contains("release=50"))
+        #expect(f.contains("level=0") && f.contains("latency=1"))
+    }
+
+    /// L5: in float, resampled, then limited, then dithered to 8-bit.
+    @Test func loudnessFilterOrder() {
+        let f = ConversionEngine.filter(channels: 2, gain: 5, limit: true)
+        let order = ["volume", "pan", "osf=flt", "alimiter", "osf=u8"].map { f.range(of: $0)!.lowerBound }
+        #expect(order == order.sorted(), "\(f)")
+        #expect(f.contains("dither_method=triangular"))
+        #expect(!ConversionEngine.filter(channels: 2, gain: 5).contains("alimiter"))
+    }
+
+    @Test func mp3FilterLimitsToo() {
+        #expect(ConversionEngine.mp3Filter(gain: 5, limit: true).hasSuffix(Limiter.filter()))
+        #expect(!ConversionEngine.mp3Filter(gain: 5).contains("alimiter"))
+    }
+
+    @Test func optionsDefaultsAndNormalise() {
+        #expect(ConversionOptions().levelling == .off)                    // L1: off by default
+        #expect(ConversionOptions().loudnessTarget == -12)                // L3
+        #expect(ConversionOptions(normalise: true).levelling == .peak)    // 1.0's name
+        var o = ConversionOptions(levelling: .loudness)
+        o.normalise = false
+        #expect(o.levelling == .loudness)                                 // turning Peak off leaves Loudness
+        o.normalise = true
+        #expect(o.levelling == .peak)
+    }
 }

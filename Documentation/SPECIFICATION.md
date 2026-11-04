@@ -1465,3 +1465,34 @@ Chapter 2, describes Normalise: a note for MacMusic's own sessions.
   minutes long, so this is negligible for them.
 - The analysis pass now does a little more work per sample (two
   filters); no slower in the tests (106 in about 13 s, as 97 were).
+
+## 18.22 Version 1.1, Stage 2 findings (2026-11-04)
+
+- Six of the owner's songs (MP3s from the Music library), levelled to
+  −12 LUFS by `mmc-convert --loudness`, came out at −12.0 to −12.6 LUFS,
+  every one peaking at −0.9 dBFS, the length unchanged:
+
+  | Song | Source (mono mix) | Gain | Limiter, up to | WAV |
+  |---|---|---|---|---|
+  | Die Spitz, "Pop Punk Anthem" | −11.0 LUFS | −1.0 dB | 2.6 dB | −12.0 LUFS |
+  | Dusty Springfield, "You Don't Have to Say You Love Me" | −19.7 | +7.7 | 6.2 (warned) | −12.2 |
+  | Blondie, "Atomic" | −16.7 | +4.7 | 5.6 | −12.6 |
+  | No Na, "Smooth" | −16.2 | +4.2 | 4.1 | −12.6 |
+  | CHUU, "XO, My Cyberlove" | −15.2 | +3.2 | 3.3 | −12.2 |
+  | The Kinks, "Sunny Afternoon" | −15.1 | +3.1 | 3.3 | −12.3 |
+
+  (The limiter column for Dusty Springfield was 7.2 dB from the loudest
+  channel before the mono mix's own peak was measured; see below.)
+- Songs come out a little under the target (0 to 0.6 LU): the limiter
+  takes some loudness with the peaks it holds. Accepted; the check (L8)
+  warns only beyond 1 LU.
+- Resampling to 22,050 Hz removes everything above 11 kHz; a source with
+  a lot there reads quieter once converted (white-ish noise lost 1 LU).
+  Music has little energy there, as the songs above show; the tests'
+  noise is low-passed at 8 kHz for this reason.
+- What the limiter takes off is worked out from the **mono mix's peak**
+  when a WAV is made (exact before resampling), and from the loudest
+  channel for an MP3 alone: the loudest channel overstated the WAV's
+  figure (7.2 against 6.2 dB for the Dusty Springfield song).
+- FFmpeg's pink noise is about 22 dB quieter than its `amplitude` says;
+  the tests set levels with `volume` instead.

@@ -58,6 +58,7 @@ public struct ConversionEngine: Sendable {
         var report: MacMusicWAVReport?
         var checked: AudioInfo?
         var peak: Double?
+        var loudness: Double?
     }
 
     func perform(_ job: ConversionJob, kept: Kept, progress: ProgressThrottle) async throws -> JobResult {
@@ -101,8 +102,23 @@ public struct ConversionEngine: Sendable {
         guard analysis.brokenSamples == 0 else { throw ConversionError.brokenAudio(analysis.brokenSamples) }
         guard analysis.frames > 0 else { throw ConversionError.noAudio }
         let trim = job.options.trimSilence ? Trim.decide(analysis, threshold: job.options.trimThreshold) : nil
-        let normalisation = job.options.normalise
-            ? Normalisation.decide(peak: analysis.peak, target: job.options.target) : .off
+        let normalisation: Normalisation
+        switch job.options.levelling {
+        case .off:
+            normalisation = .off
+        case .peak:
+            normalisation = Normalisation.decide(peak: analysis.peak, target: job.options.target)
+        case .loudness:
+            normalisation = Normalisation.decide(loudness: analysis.loudness, peak: analysis.peak,
+                                                 target: job.options.loudnessTarget)
+        }
+        // L5: Loudness limits whenever it applies a gain.
+        var limits = false
+        if job.options.levelling == .loudness, case .gain = normalisation { limits = true }
+        // The WAV's figure from the mono mix's peak (exact before
+        // resampling); an MP3 alone keeps the channels, so its loudest one.
+        let limitedPeak = kinds.contains(.macMusicWAV) ? analysis.monoPeak : analysis.peak
+        let limited = limits ? Limiter.reduction(peak: limitedPeak, gain: normalisation.dB) : nil
         let length = trim?.duration ?? analysis.duration
 
         // Where each goes (a taken name stops the job before any work, so
@@ -136,7 +152,8 @@ public struct ConversionEngine: Sendable {
             // FFmpeg reports how far it has got on its standard output.
             let report = ProgressText()
             let made = try await runner.stream(tools.ffmpeg, arguments: arguments(
-                for: p.kind, job: job, source: source, trim: trim, gain: normalisation.dB, into: p.temporary)) {
+                for: p.kind, job: job, source: source, trim: trim, gain: normalisation.dB, limit: limits,
+                into: p.temporary)) {
                 let fraction = JobProgress.fraction(fromFFmpegProgress: report.add($0), length: length)
                 progress.send(JobProgress(stage: .converting, fraction: fraction, output: kind))
             }
@@ -162,7 +179,8 @@ public struct ConversionEngine: Sendable {
         }
         for i in pending.indices where pending[i].problems.isEmpty {
             switch pending[i].kind {
-            case .macMusicWAV: await checkWAV(&pending[i], job: job, expected: length, normalisation: normalisation)
+            case .macMusicWAV: await checkWAV(&pending[i], job: job, expected: length, normalisation: normalisation,
+                                               limits: limits)
             case .mp3: await checkMP3(&pending[i], job: job, source: source, expected: length)
             }
             try Task.checkCancellation()
@@ -176,9 +194,14 @@ public struct ConversionEngine: Sendable {
         }
         // A decoded source can peak above full scale (YouTube's Opus often
         // does); without a lowering gain its loudest moments are clipped.
-        if analysis.peak > 1, normalisation.dB >= 0 {
+        if analysis.peak > 1, normalisation.dB >= 0, !limits {
             shared.append(String(format: "The source peaks above full scale (%+.1f dBFS), so its loudest moments are clipped slightly. Normalise would lower it.",
                                  20 * log10(Double(analysis.peak))))
+        }
+        // L7: a limiter working hard flattens the loudest moments.
+        if let limited, limited > Limiter.warnAbove {
+            shared.append(String(format: "Levelling it took up to %.1f dB off its loudest moments, so it may sound squashed. A lower loudness target would take off less.",
+                                 limited))
         }
         if let title = job.title, !title.trimmingCharacters(in: .whitespaces).isEmpty,
            MacMusicText.infoTitle(title) == nil, kinds.contains(.macMusicWAV) {
@@ -193,7 +216,8 @@ public struct ConversionEngine: Sendable {
             guard p.problems.isEmpty else {
                 outputs.append(OutputResult(kind: p.kind, url: nil, problems: p.problems,
                                             warnings: shared + p.warnings, report: p.report,
-                                            checked: p.checked, size: nil, peak: p.peak))
+                                            checked: p.checked, size: nil, peak: p.peak,
+                                            loudness: p.loudness))
                 continue
             }
             // Moving can still fail (the folder gone, a name taken a moment
@@ -208,26 +232,28 @@ public struct ConversionEngine: Sendable {
                 outputs.append(OutputResult(kind: p.kind, url: nil,
                                             problems: ["It couldn't be saved in the folder: \(error.localizedDescription)"],
                                             warnings: shared + p.warnings, report: p.report,
-                                            checked: p.checked, size: nil, peak: p.peak))
+                                            checked: p.checked, size: nil, peak: p.peak,
+                                            loudness: p.loudness))
                 continue
             }
             kept.add(p.destination.path)
             let size = (try? files.attributesOfItem(atPath: p.destination.path)[.size] as? Int64) ?? nil
             outputs.append(OutputResult(kind: p.kind, url: p.destination, problems: [],
                                         warnings: shared + p.warnings, report: p.report,
-                                        checked: p.checked, size: size, peak: p.peak))
+                                        checked: p.checked, size: size, peak: p.peak,
+                                        loudness: p.loudness))
         }
 
         let passed = outputs.filter(\.succeeded).count
         let stage: JobStage = passed == outputs.count ? .completed : passed == 0 ? .failed : .completedWithErrors
         onStage(stage)
         return JobResult(stage: stage, source: source, analysis: analysis, normalisation: normalisation,
-                         trim: trim, outputs: outputs)
+                         trim: trim, outputs: outputs, levelling: job.options.levelling, limited: limited)
     }
 
     /// FFmpeg's arguments for one output.
     func arguments(for kind: OutputKind, job: ConversionJob, source: AudioInfo, trim: Trim?,
-                   gain: Double, into temporary: URL) -> [String] {
+                   gain: Double, limit: Bool = false, into temporary: URL) -> [String] {
         var a = ["-nostdin", "-hide_banner", "-v", "error", "-n",
                  "-progress", "pipe:1", "-nostats",
                  "-i", job.source.path,
@@ -235,14 +261,14 @@ public struct ConversionEngine: Sendable {
                  "-map_metadata", "-1", "-map_chapters", "-1"]
         switch kind {
         case .macMusicWAV:
-            a += ["-af", Self.filter(channels: max(source.channels, 1), trim: trim, gain: gain),
+            a += ["-af", Self.filter(channels: max(source.channels, 1), trim: trim, gain: gain, limit: limit),
                   "-c:a", "pcm_u8",
                   "-ar", faults.contains(.macMusicWAV) ? "nonsense" : String(MacMusicFormat.sampleRate),
                   "-ac", "1",
                   "-fflags", "+bitexact", "-flags:a", "+bitexact",
                   "-f", "wav"]
         case .mp3:
-            a += ["-af", Self.mp3Filter(trim: trim, gain: gain),
+            a += ["-af", Self.mp3Filter(trim: trim, gain: gain, limit: limit),
                   "-c:a", "libmp3lame", "-b:a", faults.contains(.mp3) ? "nonsense" : "192k",
                   "-ar", String(MP3Format.sampleRate(for: source.sampleRate)),
                   "-ac", String(MP3Format.channels(for: source.channels)),
@@ -259,7 +285,7 @@ public struct ConversionEngine: Sendable {
     /// The WAV's checks: MacMusic's rules, ffprobe, a full decode, the
     /// length.
     func checkWAV(_ p: inout Pending, job: ConversionJob, expected: Double,
-                  normalisation: Normalisation) async {
+                  normalisation: Normalisation, limits: Bool = false) async {
         let report = MacMusicWAVValidator.check(p.temporary)
         p.report = report
         p.problems += report.problems
@@ -278,10 +304,42 @@ public struct ConversionEngine: Sendable {
         }
         p.warnings += MacMusicText.fileNameProblems(p.destination.lastPathComponent)
         p.peak = Self.peak(of: p.temporary)
-        if case .gain(_, false) = normalisation, let peak = p.peak, peak < job.options.target - 1.5 {
+        if job.options.levelling == .peak, case .gain(_, false) = normalisation,
+           let peak = p.peak, peak < job.options.target - 1.5 {
             p.warnings.append(String(format: "The WAV peaks at %.1f dBFS, below the target: its channels differ, and mixing them into one lowers the peak.", peak))
         }
+        if job.options.levelling == .loudness {
+            await checkLoudness(&p, job: job, normalisation: normalisation, limits: limits)
+        }
     }
+
+    /// L8, the WAV levelled by loudness: its peak held by the limiter (the
+    /// ceiling, plus a step for the dither and rounding), and its loudness,
+    /// measured, near the target. The limiter can bring a song in a little
+    /// under the target by taking off its loudest moments, so a miss is a
+    /// warning, not a failure.
+    func checkLoudness(_ p: inout Pending, job: ConversionJob, normalisation: Normalisation,
+                       limits: Bool) async {
+        if limits, let peak = p.peak, peak > ConversionOptions.ceiling + Self.ditherAllowance {
+            p.problems.append(String(format: "It peaks at %.1f dBFS, over the limiter's %.1f dBFS.",
+                                     peak, ConversionOptions.ceiling))
+        }
+        guard let measured = try? await AudioAnalyser(tools: tools)
+            .analyse(p.temporary, sampleRate: Int(MacMusicFormat.sampleRate), channels: 1) else {
+            p.problems.append("Its loudness couldn't be measured.")
+            return
+        }
+        p.loudness = measured.loudness
+        if case .gain(_, false) = normalisation, let loud = measured.loudness,
+           abs(loud - job.options.loudnessTarget) > 1 {
+            p.warnings.append(String(format: "It comes out at %.1f LUFS, not the %.1f LUFS asked for: the limiter took more off its loudest moments.",
+                                     loud, job.options.loudnessTarget))
+        }
+    }
+
+    /// An 8-bit step (1/128 of full scale) above −1 dBFS is about 0.08 dB;
+    /// half a dB allows for that, the dither and rounding.
+    static let ditherAllowance = 0.5
 
     /// The MP3's checks (M6): ffprobe's reading (MP3, 192 kbps, the rate,
     /// the channels, the title), a full decode, the length, the peak.
@@ -315,6 +373,7 @@ public struct ConversionEngine: Sendable {
             let peak = Double(measured.peak)
             let dB = peak > 0 ? 20 * log10(peak) : -Double.infinity
             p.peak = dB
+            p.loudness = measured.loudness
             if peak > 1 {
                 p.warnings.append(String(format: "The MP3 peaks at %+.1f dBFS: encoding pushed it past full scale, so it may clip on playback.", dB))
             }
@@ -339,22 +398,33 @@ public struct ConversionEngine: Sendable {
     /// the gain in float; average the channels into one; resample with
     /// FFmpeg's own resampler at high quality (§18.5); dither to unsigned
     /// 8-bit.
-    public static func filter(channels: Int, trim: Trim? = nil, gain: Double = 0) -> String {
+    /// L5, Loudness: resampled in float, then the limiter, then the dither
+    /// to 8-bit, so the limiter sees the samples as they'll be played.
+    public static func filter(channels: Int, trim: Trim? = nil, gain: Double = 0,
+                              limit: Bool = false) -> String {
         var parts = shared(trim: trim, gain: gain)
         if channels > 1 {
             let share = 1.0 / Double(channels)
             let sum = (0..<channels).map { "\(share)*c\($0)" }.joined(separator: "+")
             parts.append("pan=mono|c0=\(sum)")
         }
-        parts.append("aresample=\(MacMusicFormat.sampleRate):filter_size=128:phase_shift=14"
-                     + ":cutoff=0.97:linear_interp=1:osf=u8:dither_method=triangular")
+        let resample = "aresample=\(MacMusicFormat.sampleRate):filter_size=128:phase_shift=14"
+            + ":cutoff=0.97:linear_interp=1"
+        if limit {
+            parts.append(resample + ":osf=flt")
+            parts.append(Limiter.filter())
+            parts.append("aresample=osf=u8:dither_method=triangular")
+        } else {
+            parts.append(resample + ":osf=u8:dither_method=triangular")
+        }
         return parts.joined(separator: ",")
     }
 
     /// The MP3's filter: the same trim and gain as the WAV, nothing more
     /// (its rate and channels are set by -ar and -ac).
-    public static func mp3Filter(trim: Trim? = nil, gain: Double = 0) -> String {
-        let parts = shared(trim: trim, gain: gain)
+    public static func mp3Filter(trim: Trim? = nil, gain: Double = 0, limit: Bool = false) -> String {
+        var parts = shared(trim: trim, gain: gain)
+        if limit { parts.append(Limiter.filter()) }                // L6
         return parts.isEmpty ? "anull" : parts.joined(separator: ",")
     }
 

@@ -18,6 +18,9 @@ public struct AudioAnalysis: Sendable, Equatable {
     /// The mono mix's integrated loudness in LUFS (L2), or nil if nothing
     /// passes the gates (shorter than 400 ms, or silent).
     public var loudness: Double? = nil
+    /// The mono mix's peak, as a fraction of full scale: the WAV's peak
+    /// before resampling (L7).
+    public var monoPeak: Float = 0
 
     public var duration: Double { Double(frames) / Double(max(sampleRate, 1)) }
     public var peak: Float { channelPeaks.max() ?? 0 }
@@ -65,6 +68,7 @@ public struct AudioAnalyser: Sendable {
         var expected: Int?
         var progress: (@Sendable (Double) -> Void)?
         var loudness: LoudnessMeter
+        var monoPeak: Float = 0
 
         init(channels: Int, sampleRate: Int) {
             self.channels = channels
@@ -95,7 +99,9 @@ public struct AudioAnalyser: Sendable {
                     }
                     // L2: the mono mix, the channels averaged as the WAV's
                     // filter averages them (a broken sample counts as 0).
-                    loudness.add(mix / Double(channels))
+                    let mono = mix / Double(channels)
+                    loudness.add(mono)
+                    if Float(abs(mono)) > monoPeak { monoPeak = Float(abs(mono)) }
                     if loud {
                         if firstSound == nil { firstSound = frames }
                         lastSound = frames
@@ -112,7 +118,7 @@ public struct AudioAnalyser: Sendable {
         func result(sampleRate: Int) -> AudioAnalysis {
             AudioAnalysis(sampleRate: sampleRate, channels: channels, frames: frames,
                           channelPeaks: peaks, firstSound: firstSound, lastSound: lastSound,
-                          brokenSamples: broken, loudness: loudness.integrated)
+                          brokenSamples: broken, loudness: loudness.integrated, monoPeak: monoPeak)
         }
     }
 }

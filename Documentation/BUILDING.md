@@ -83,4 +83,9 @@ the converter uses FFmpeg's own at high-quality settings (§18.5).
 
     swift build -c release --product mmc-convert     # with SDKROOT set, as above
     .build/release/mmc-convert <input file or YouTube address> <output folder> [--title "Title"] [--name "File name"] \
-        [--normalise [dBFS]] [--trim [2|3]] [--wav | --mp3 | --both] [--reencode]
+        [--normalise [dBFS] | --loudness [LUFS]] [--trim [2|3]] [--wav | --mp3 | --both] [--reencode]
+
+`--normalise` sets the loudest peak (−1 dBFS unless given); `--loudness`
+sets the loudness, with a limiter at −1 dBFS (−12 LUFS unless given; 1.1,
+L1). It prints the source's loudness, the gain, what the limiter takes
+off, and each output's peak and loudness.

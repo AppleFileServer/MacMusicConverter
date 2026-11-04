@@ -43,21 +43,43 @@ public struct ConversionJob: Sendable {
     }
 }
 
+/// How the level is set (L1): left alone, the loudest peak to a target
+/// (1.0's Normalise, §6), or the loudness to a target, with a limiter.
+public enum Levelling: String, Sendable, Equatable, CaseIterable, Codable {
+    case off, peak, loudness
+}
+
 public struct ConversionOptions: Sendable, Equatable {
-    /// Peak normalisation (§6), to `target` dBFS.
-    public var normalise: Bool
+    public var levelling: Levelling
+    /// Peak's target, in dBFS (§6).
     public var target: Double
+    /// Loudness's target, in LUFS (L3).
+    public var loudnessTarget: Double
     /// Trimming long silence at the ends (S7), longer than `trimThreshold`
     /// seconds (2 or 3).
     public var trimSilence: Bool
     public var trimThreshold: Double
 
-    public init(normalise: Bool = false, target: Double = -1,
+    /// L3: the default loudness, chosen by the owner.
+    public static let defaultLoudness = -12.0
+    /// The limiter's ceiling (L5), in dBFS.
+    public static let ceiling = -1.0
+
+    /// `normalise: true` is 1.0's way of asking for Peak.
+    public init(levelling: Levelling = .off, normalise: Bool = false, target: Double = -1,
+                loudnessTarget: Double = ConversionOptions.defaultLoudness,
                 trimSilence: Bool = false, trimThreshold: Double = 2) {
-        self.normalise = normalise
+        self.levelling = normalise && levelling == .off ? .peak : levelling
         self.target = target
+        self.loudnessTarget = loudnessTarget
         self.trimSilence = trimSilence
         self.trimThreshold = trimThreshold
+    }
+
+    /// 1.0's Normalise: Peak.
+    public var normalise: Bool {
+        get { levelling == .peak }
+        set { levelling = newValue ? .peak : (levelling == .peak ? .off : levelling) }
     }
 }
 
@@ -100,6 +122,8 @@ public struct OutputResult: Sendable {
     public let size: Int64?
     /// The output's own peak, in dBFS.
     public let peak: Double?
+    /// The output's loudness, in LUFS, measured on its mono mix (L7).
+    public var loudness: Double? = nil
 
     public var succeeded: Bool { url != nil && problems.isEmpty }
 }
@@ -111,6 +135,10 @@ public struct JobResult: Sendable {
     public let normalisation: Normalisation
     public let trim: Trim?
     public let outputs: [OutputResult]
+    /// How the level was set, and (Loudness) how much the limiter may have
+    /// had to take off the loudest peak, in dB, 0 if nothing (L7).
+    public var levelling: Levelling = .off
+    public var limited: Double? = nil
 }
 
 public enum ConversionError: Error, Equatable, Sendable {
