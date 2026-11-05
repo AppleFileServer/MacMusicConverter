@@ -177,10 +177,15 @@ struct MainWindowView: View {
 
     var soundSection: some View {
         Section("Sound") {
-            Toggle(isOn: $model.prefs.normalise) {
-                Text("Normalise")
-                Text(String(format: "Raise or lower the loudest peak to %.1f dBFS. Not loudness levelling: songs may still sound different.", model.prefs.target))
+            Picker(selection: $model.prefs.levelling) {
+                Text("Off").tag(Levelling.off)
+                Text("Peak").tag(Levelling.peak)
+                Text("Loudness").tag(Levelling.loudness)
+            } label: {
+                Text("Level")
+                Text(levellingHelp)
             }
+            .pickerStyle(.segmented)
             Toggle(isOn: $model.prefs.trimSilence) {
                 Text("Trim silence at the ends")
                 Text("Silence longer than this at the start or end is cut to half a second. The middle is never touched.")
@@ -190,6 +195,20 @@ struct MainWindowView: View {
                 Text("3 seconds").tag(3.0)
             }
             .disabled(!model.prefs.trimSilence)
+        }
+    }
+
+    /// What the Level choice does (L1).
+    var levellingHelp: String {
+        switch model.prefs.levelling {
+        case .off:
+            "The sound is left as it is."
+        case .peak:
+            String(format: "Raise or lower the loudest peak to %.1f dBFS. Songs may still sound different in loudness.",
+                   model.prefs.target)
+        case .loudness:
+            String(format: "Bring every song to %.0f LUFS, so they sound equally loud, and louder on the Macintosh. A limiter keeps the loudest moments under %.0f dBFS.",
+                   model.prefs.loudnessTarget, ConversionOptions.ceiling)
         }
     }
 
@@ -213,9 +232,14 @@ struct MainWindowView: View {
     var advancedSection: some View {
         Section {
             DisclosureGroup("Advanced", isExpanded: $showAdvanced) {
-                LabeledContent("Normalise to") {
+                LabeledContent("Peak to") {
                     Stepper(value: $model.prefs.target, in: -6...0, step: 0.5) {
                         Text(String(format: "%.1f dBFS", model.prefs.target)).monospacedDigit()
+                    }
+                }
+                LabeledContent("Loudness to") {
+                    Stepper(value: $model.prefs.loudnessTarget, in: -16...(-8), step: 1) {
+                        Text(String(format: "%.0f LUFS", model.prefs.loudnessTarget)).monospacedDigit()
                     }
                 }
                 LabeledContent("MacMusic WAV", value: "22,050 Hz · mono · 8-bit (fixed: what MacMusic plays)")
@@ -317,7 +341,17 @@ struct MainWindowView: View {
         case .off: break
         case .skipped(let why): parts.append(why)
         case .gain(let dB, let capped):
-            parts.append(String(format: "Normalised by %+.1f dB", dB) + (capped ? " (the most allowed)." : "."))
+            if r.levelling == .loudness {
+                var text = r.analysis.loudness.map { String(format: "Levelled from %.1f LUFS by %+.1f dB", $0, dB) }
+                    ?? String(format: "Levelled by %+.1f dB", dB)
+                text += capped ? " (the most allowed)" : ""
+                if let limited = r.limited, limited >= 0.1 {
+                    text += String(format: "; the limiter took up to %.1f dB off the loudest moments", limited)
+                }
+                parts.append(text + ".")
+            } else {
+                parts.append(String(format: "Normalised by %+.1f dB", dB) + (capped ? " (the most allowed)." : "."))
+            }
         }
         if let t = r.trim {
             if let note = t.note { parts.append(note) }
@@ -374,6 +408,7 @@ struct OutputRow: View {
             else if let d = output.checked?.duration { parts.append(duration(d)) }
             if let size = output.size { parts.append(ByteCountFormatter.string(fromByteCount: size, countStyle: .file)) }
             if let peak = output.peak, peak.isFinite { parts.append(String(format: "peak %.1f dBFS", peak)) }
+            if let loudness = output.loudness { parts.append(String(format: "%.1f LUFS", loudness)) }
         } else {
             parts.append("failed: nothing was saved")
         }

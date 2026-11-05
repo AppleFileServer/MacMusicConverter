@@ -21,7 +21,7 @@ need the pinned FFmpeg (BUILDING.md) but no network and no music files.
 | `NamingTests` (4) | unsafe characters, path tricks, hidden names, transliteration; names within 31 characters, cut at a word; refuse, next free name, replace; the space estimate |
 | `EngineTests` (15) | a source over full scale warned about unless lowered; normalising a quiet tone to −1 dBFS, lowering a full-scale one, the cap, near-silence left alone, uneven channels warned about; trimming 4 s and 3 s ends, the 3 s threshold, silence in the middle kept, trimming off; conflict policies; NaN samples refused; cancelling mid-job and before starting, leaving nothing; the stages in order; missing source and destination |
 | `DualOutputTests` (11) | MP3 only (192 kbps, stereo, the title, the name); both from one job; both sharing the gain and trim (same length, both at −1 dBFS); mono, surround, 48 and 96 kHz sources; an MP3 from an MP3 refused unconfirmed, nothing written, then confirmed; one output failing (each way) keeping the other, both failing; any characters in the MP3's title; no title, no tag; cancelling with both; the source never replaced, not even by case; the MP3 rates |
-| `WindowLogicTests` (8) | preferences saved, loaded and tidied; the default folder; the "Saves as" names and the taken ones (the source never asked about); FFmpeg's progress read; the throttle; progress through a real two-output job; plain messages |
+| `WindowLogicTests` (12) | preferences saved, loaded and tidied; the default folder; the "Saves as" names and the taken ones (the source never asked about); FFmpeg's progress read; the throttle; progress through a real two-output job; plain messages; 1.1: Loudness and its target kept (−16 to −8 LUFS), Off by default; 1.0's saved choices read (Normalise as Peak, the rest kept); an unreadable choice losing only itself; `normalise` still written for 1.0 |
 | `YouTubeTests` (12 + 1 live) | accepted and refused addresses (a playlist dropped); yt-dlp's errors sorted; progress lines; through a stand-in yt-dlp: the look-up and its arguments (no playlist, no cookies, the age workaround off, the address after "--"), a private video, a playlist refused, both outputs from one retrieval named after the video, an untitled job named after it, a retrieval error stopping the job, cancelling the download. The live test runs only when MMC_LIVE_YOUTUBE_URL is set |
 | `HardeningTests` (12) | stopping a tool stops its children; stopping a list stops them all; leftovers (old and ours only); awkward source names (a leading "-", `concat:`, quotes, emoji, backslash, a separate accent); long titles within the limits, and converting; a read-only folder; the folder and the source removed mid-job; a full disk (a 4 MB disk image): refused up front, and, with the estimate skipped, failing mid-write with no partial file; no tools found; yt-dlp's network timeout |
 | `SelfTestTests` (2) | the self-test passes with tools, and fails, saying why, without |
@@ -35,7 +35,7 @@ unfeel (No Copyright Music, the artist's channel), in about 25 s. The live test,
     MMC_LIVE_YOUTUBE_URL="https://www.youtube.com/watch?v=..." tools/test.sh --filter live Fixtures that aren't MP3s (so an MP3 can be
 made from them unasked) are 16-bit WAVs.
 
-1.1, Stage 2 (2026-11-04): 124 tests, all passing, in about 14 s, run twice. 1.1, Stage 1: 106 tests. Checked by hand, outside the tests (no music in the repository, S4): 13 of the owner's songs, read by the meter and by FFmpeg's `ebur128`, agree to FFmpeg's one decimal place (−12.6 to −20.2 LUFS).
+1.1, Stage 3 (2026-11-04): 128 tests, all passing, in about 16 s; the app built and its self-test passed. 1.1, Stage 2: 124 tests, all passing, in about 14 s, run twice. 1.1, Stage 1: 106 tests. Checked by hand, outside the tests (no music in the repository, S4): 13 of the owner's songs, read by the meter and by FFmpeg's `ebur128`, agree to FFmpeg's one decimal place (−12.6 to −20.2 LUFS).
 
 Not covered yet: a full disk (the estimate is tested; Stage 6).
 
@@ -54,7 +54,7 @@ The window shows the engine's results; its logic is tested above
     tools/build-app.sh && open "build/MacMusic Converter Utility.app"
 
 1. **A song, both outputs:** choose (or drop) an MP3; Make: Both; type a
-   title; Normalise and Trim on. Convert. Expect the re-encode question
+   title; Level: Peak, and Trim on. Convert. Expect the re-encode question
    (it's an MP3): Re-encode. The progress line names each stage, with a
    percentage. Results: two rows (✓), sizes, Show in Finder works.
 2. **Names already taken:** Convert the same again. Expect "... already
@@ -67,7 +67,7 @@ The window shows the engine's results; its logic is tested above
    "couldn't be read as audio"; Convert stays dimmed.
 6. **The folder:** Choose… another folder; Use Default goes back to
    ~/Music/MacMusic Converter.
-7. **Remembered:** quit and reopen: Make, Normalise, Trim, its seconds,
+7. **Remembered:** quit and reopen: Make, Level, Trim, its seconds,
    the target (Advanced) and the folder are as left; the source, title
    and file name are not.
 8. **YouTube:** paste a video's address (with a playlist in it too):
@@ -82,6 +82,12 @@ The window shows the engine's results; its logic is tested above
 10. **Closing mid-job:** the same with the window's close button.
 11. **Closing when idle:** the app quits; no question.
 12. **Licences:** Advanced, Licences… opens the notices.
+13. **Level (1.1):** Off, Peak and Loudness each change the line under
+   them (Peak names its dBFS, Loudness its LUFS); Advanced has "Peak to"
+   (−6 to 0 dBFS) and "Loudness to" (−16 to −8 LUFS). Convert a quiet
+   song with Loudness, Both: the result says "Levelled from … LUFS by …",
+   with what the limiter took off; each row shows its peak and LUFS.
+   A 1.0 user's Normalise comes back as Peak.
 
 ## The self-test (P5)
 

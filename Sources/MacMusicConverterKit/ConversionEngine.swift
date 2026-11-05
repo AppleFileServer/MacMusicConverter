@@ -373,7 +373,7 @@ public struct ConversionEngine: Sendable {
             let peak = Double(measured.peak)
             let dB = peak > 0 ? 20 * log10(peak) : -Double.infinity
             p.peak = dB
-            p.loudness = measured.loudness
+            if job.options.levelling == .loudness { p.loudness = measured.loudness }
             if peak > 1 {
                 p.warnings.append(String(format: "The MP3 peaks at %+.1f dBFS: encoding pushed it past full scale, so it may clip on playback.", dB))
             }

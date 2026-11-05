@@ -11,6 +11,11 @@
   source's loudness, the gain, what the limiter takes off (a warning over
   6 dB) and each output's loudness; `mmc-convert --loudness [LUFS]`.
   Peak (1.0's Normalise) is unchanged.
+- Stage 3, the window (L1, L7): Level, Off, Peak or Loudness, in place
+  of Normalise, with a line saying what each does; "Loudness to" in
+  Advanced; the result says where the song was levelled from and what
+  the limiter took off, and each output its loudness. 1.0's saved
+  choices are read (Normalise as Peak).
 
 ## 1.0 (2026-10-09)
 

@@ -1496,3 +1496,16 @@ Chapter 2, describes Normalise: a note for MacMusic's own sessions.
   figure (7.2 against 6.2 dB for the Dusty Springfield song).
 - FFmpeg's pink noise is about 22 dB quieter than its `amplitude` says;
   the tests set levels with `volume` instead.
+
+## 18.23 Version 1.1, Stage 3 findings (2026-11-04)
+
+- The saved choices are read and written by hand from 1.1: Swift's
+  automatic reading needs every key present, so 1.0's saved choices
+  (which have no levelling) would have been refused whole and every
+  choice lost. Now a missing or unreadable value keeps its default and
+  only that one; a ticked Normalise is read as Peak; `normalise` is
+  still written, so 1.0 reads what 1.1 saves.
+- An MP3's loudness is reported only with Loudness, as the WAV's is.
+- The window was built and the app's self-test passed; the window
+  itself is the owner's to try (TESTING.md, "Trying the window", item 13), as no screenshots
+  are taken without the owner asking.
