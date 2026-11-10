@@ -195,7 +195,7 @@ public struct ConversionEngine: Sendable {
         // A decoded source can peak above full scale (YouTube's Opus often
         // does); without a lowering gain its loudest moments are clipped.
         if analysis.peak > 1, normalisation.dB >= 0, !limits {
-            shared.append(String(format: "The source peaks above full scale (%+.1f dBFS), so its loudest moments are clipped slightly. Normalise would lower it.",
+            shared.append(String(format: "The source peaks above full scale (%+.1f dBFS), so its loudest moments are clipped slightly. Level: Peak or Loudness would lower it.",
                                  20 * log10(Double(analysis.peak))))
         }
         // L7: a limiter working hard flattens the loudest moments.
