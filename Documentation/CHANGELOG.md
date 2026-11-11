@@ -21,6 +21,10 @@
   choice), so all songs sound equally loud with little limiting. Level,
   "Peak to" and "Loudness to" are gone from the window; earlier saved
   choices are read, their level settings ignored.
+- The Plus's own rate (§18.25, K1-K6): MacMusic WAVs are made at
+  22,254 Hz, not 22,050, so songs play at their true speed and pitch on
+  the Plus (MacMusic's issue I4: 0.9% fast). They need MacMusic 1.1.1,
+  which is to accept the new rate; MacMusic 1.1 refuses them.
 
 ## 1.0 (2026-10-09)
 

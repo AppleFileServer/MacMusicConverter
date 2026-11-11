@@ -216,7 +216,7 @@ struct MainWindowView: View {
     var advancedSection: some View {
         Section {
             DisclosureGroup("Advanced", isExpanded: $showAdvanced) {
-                LabeledContent("MacMusic WAV", value: "22,050 Hz · mono · 8-bit (fixed: what MacMusic plays)")
+                LabeledContent("MacMusic WAV", value: "\(Int(MacMusicFormat.sampleRate).formatted()) Hz · mono · 8-bit (fixed: the Macintosh Plus's own rate)")
                 LabeledContent("MP3") {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text("192 kbps · stereo if the source is")

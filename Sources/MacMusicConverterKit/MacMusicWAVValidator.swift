@@ -75,7 +75,7 @@ public enum MacMusicWAVValidator {
                 report.problems.append("The format is \(String(format: "0x%04X", report.formatTag)), not plain PCM (1).")
             }
             if report.channels != f.channels { report.problems.append("It has \(report.channels) channels, not 1.") }
-            if report.sampleRate != f.sampleRate { report.problems.append("Its sample rate is \(report.sampleRate) Hz, not 22050.") }
+            if report.sampleRate != f.sampleRate { report.problems.append("Its sample rate is \(report.sampleRate) Hz, not \(f.sampleRate).") }
             if report.bitsPerSample != f.bitsPerSample { report.problems.append("It is \(report.bitsPerSample)-bit, not 8-bit.") }
             if blockAlign != f.blockAlign || byteRate != f.byteRate {
                 report.problems.append("Its format information is inconsistent (block align \(blockAlign), byte rate \(byteRate)).")

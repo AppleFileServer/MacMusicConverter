@@ -43,6 +43,6 @@ import Testing
 
     @Test func spaceEstimate() {
         // A minute is 1.3 MB, plus the 1 MB margin.
-        #expect(DiskSpace.macMusicBytes(seconds: 60) == 1_323_000 + 1_048_576)
+        #expect(DiskSpace.macMusicBytes(seconds: 60) == 60 * 22_254 + 1_048_576)
     }
 }

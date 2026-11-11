@@ -1542,3 +1542,34 @@ Chapter 2, describes Normalise: a note for MacMusic's own sessions.
 - The second listening test ("HD50_512 Even Test.hda": albums "Before",
   the six songs as they were, and "Levelled", at −16) is the owner's to
   try on the speakers. Stage 5 follows it.
+
+## 18.25 Version 1.1: the Plus's own sample rate (2026-11-11, approved by the owner)
+
+The Plus plays sound at a fixed 22,254.5 samples a second (one sample
+each screen line); songs made at 22,050 play 0.93% fast there, about a
+sixth of a semitone high (MacMusic's issue I4). The owner is rebuilding
+the library from the Converter's levelled songs anyway, so the songs are
+now made at the Plus's own rate.
+
+- **K1, the rate:** MacMusic WAVs are made at **22,254 Hz** (the
+  hardware's 22,254.5 to the whole number a WAV holds: 0.002% off, about
+  0.2 s in three hours). `MacMusicFormat.sampleRate` and `byteRate`; the
+  validator, the ffprobe check and the space estimate follow from them.
+  MP3s are unchanged.
+- **K2, MacMusic first:** MacMusic 1.1 accepts only 22,050 Hz, at import
+  (`src/wav.c`) and in its song files (`src/songfile.c`), and times its
+  songs at 22,050 (`src/playback.c`). MacMusic 1.1.1 is to accept 22,254
+  as well, with times from each song's own rate; done in MacMusic's own
+  sessions, not from here.
+- **K3, the Transfer Utility:** its check of MacMusic WAVs must accept
+  22,254 too; done in its own sessions.
+- **K4, the release:** Converter 1.1 is released only after MacMusic
+  1.1.1.
+- **K5, old songs:** songs already made at 22,050 keep working in
+  MacMusic 1.1.1, still 0.9% fast, until converted again.
+- **K6, the check on the Plus:** a new song lasts exactly as long as
+  MacMusic's timer and a stopwatch say, over a whole song.
+
+Findings: "Sunny Afternoon" (The Kinks) converted at 22,254 Hz lasts
+212.741 s against the source's 212.754 s (the MP3's own padding); the
+loudness, −16.0 LUFS, and peak are as at 22,050. The tests (129) pass.

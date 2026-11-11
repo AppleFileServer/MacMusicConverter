@@ -291,7 +291,7 @@ public struct ConversionEngine: Sendable {
         p.problems += report.problems
         if let checked = try? await AudioInspector(tools: tools).inspect(p.temporary) {
             p.checked = checked
-            if checked.codec != "pcm_u8" || checked.sampleRate != 22_050 || checked.channels != 1
+            if checked.codec != "pcm_u8" || checked.sampleRate != Int(MacMusicFormat.sampleRate) || checked.channels != 1
                 || checked.bitsPerSample != 8 {
                 p.problems.append("ffprobe reads it as \(checked.codec), \(checked.sampleRate) Hz, \(checked.channels) channel(s), \(checked.bitsPerSample)-bit.")
             }

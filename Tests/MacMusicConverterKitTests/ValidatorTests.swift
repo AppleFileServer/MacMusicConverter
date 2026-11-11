@@ -23,6 +23,7 @@ import Testing
         let cases: [(String, URL)] = [
             ("stereo", try f.wav("stereo.wav", channels: 2, blockAlign: 2, byteRate: 44_100)),
             ("44.1 kHz", try f.wav("rate.wav", rate: 44_100, byteRate: 44_100)),
+            ("22,050 Hz (MacMusic 1.1's)", try f.wav("old.wav", rate: 22_050, byteRate: 22_050)),
             ("16-bit", try f.wav("bits.wav", bits: 16, blockAlign: 2, byteRate: 44_100)),
             ("extensible", try f.wav("ext.wav", format: 0xFFFE)),
             ("inconsistent", try f.wav("incon.wav", byteRate: 11_025)),

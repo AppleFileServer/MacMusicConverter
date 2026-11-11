@@ -62,7 +62,7 @@ The app (target `MacMusicConverter`):
 
 The WAV's conversion, as FFmpeg arguments: the first audio stream only,
 no metadata, `atrim` (the kept part), `volume` (the gain, in float), `pan`
-averaging the channels, `aresample` to 22,050 Hz
+averaging the channels, `aresample` to 22,254 Hz (the Plus's own rate, from 1.1; 22,050 before)
 (filter size 128, phase shift 14, cutoff 0.97, linear interpolation)
 with triangular dither to unsigned 8-bit, `pcm_u8`, bitexact.
 

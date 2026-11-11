@@ -60,8 +60,8 @@ struct Fixtures {
     }
 
     /// A WAV header and body written byte by byte.
-    func wav(_ name: String, format: UInt16 = 1, channels: UInt16 = 1, rate: UInt32 = 22_050,
-             bits: UInt16 = 8, blockAlign: UInt16 = 1, byteRate: UInt32 = 22_050,
+    func wav(_ name: String, format: UInt16 = 1, channels: UInt16 = 1, rate: UInt32 = MacMusicFormat.sampleRate,
+             bits: UInt16 = 8, blockAlign: UInt16 = 1, byteRate: UInt32 = MacMusicFormat.byteRate,
              data: Data? = Data(repeating: 128, count: 100), extra: [(String, Data)] = []) throws -> URL {
         var fmt = Data()
         fmt.appendLittleEndian(format); fmt.appendLittleEndian(channels)
