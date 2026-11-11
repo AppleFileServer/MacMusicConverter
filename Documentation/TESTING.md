@@ -15,13 +15,13 @@ need the pinned FFmpeg (BUILDING.md) but no network and no music files.
 | `formatIsSelfConsistent` | the MacMusic contract's byte rate and block align follow from its other values |
 | `MacMusicTextTests` (6) | the title as MacMusic will store it: plain titles kept; curly punctuation made plain; Latin-1 letters kept, others transliterated (Ł, Cyrillic); cut to 63; blank gives none; file names over 31 characters or with a colon |
 | `ValidatorTests` (5) | MacMusic's import rules against hand-made WAVs: a good file passes; not a WAV; stereo, 44.1 kHz, 16-bit, extensible, inconsistent, no data, empty data and an iPod chunk all refused; a chunk past the end; an appended title read back |
-| `ProcessingTests` (17) | the gain (to the target, lowering, the +20 dB cap, silence skipped) and the trim (cut to a gap, short silence kept, 2 s vs 3 s, all-silent), and the filter's order; 1.1: the loudness gain (to the target, lowering, the cap, silence and no loudness skipped), the limiter's reduction and settings, the Loudness filter's order (float, limiter, then dither) and the MP3's, the options (Off by default, −12 LUFS, `normalise` as Peak) |
-| `LevellingTests` (9) | 1.1, real conversions levelled by loudness (L3-L8): quiet noise raised and a loud tone lowered to −12 LUFS within 1 LU; a −16 target; peaks held at −1 dBFS with the length kept to 5 ms; a few dB of limiting not warned about, much more warned about ("squashed"); the +20 dB cap with no warning about the target; silence left alone; the WAV and MP3 both levelled; Peak unchanged (no limiter) |
+| `ProcessingTests` (17) | the gain (to the target, lowering, the +20 dB cap, silence skipped) and the trim (cut to a gap, short silence kept, 2 s vs 3 s, all-silent), and the filter's order; 1.1: the loudness gain (to the target, lowering, the cap, silence and no loudness skipped), the limiter's reduction and settings, the Loudness filter's order (float, limiter, then dither) and the MP3's, the options (Off by default in the engine, −16 LUFS, `normalise` as Peak) |
+| `LevellingTests` (10) | 1.1, real conversions levelled by loudness (L3-L8): quiet noise raised and a loud tone lowered to −16 LUFS within 1 LU; a −12 target; the window's options (−16, L10); peaks held at −1 dBFS with the length kept to 5 ms; a few dB of limiting not warned about, much more warned about ("squashed"); the +20 dB cap with no warning about the target; silence left alone; the WAV and MP3 both levelled; Peak unchanged (no limiter) |
 | `LoudnessTests` (9 tests, 17 cases) | the meter (L2): a full-scale 1 kHz sine reads −3.01 LUFS at 22.05, 44.1, 48 and 96 kHz; the level follows the amplitude; silence, under 400 ms and below −70 LUFS read as none; silence around a tone gated out (edge blocks counted as the standard says); a passage 20 LU down left out, one 6 LU down counted; FFmpeg's `ebur128` on the mono mix agrees within 0.1 LU on six sources (pink and brown noise, bass, treble, mono and stereo, 22.05-48 kHz, level steps with silence); a silent source has none |
 | `NamingTests` (4) | unsafe characters, path tricks, hidden names, transliteration; names within 31 characters, cut at a word; refuse, next free name, replace; the space estimate |
 | `EngineTests` (15) | a source over full scale warned about unless lowered; normalising a quiet tone to −1 dBFS, lowering a full-scale one, the cap, near-silence left alone, uneven channels warned about; trimming 4 s and 3 s ends, the 3 s threshold, silence in the middle kept, trimming off; conflict policies; NaN samples refused; cancelling mid-job and before starting, leaving nothing; the stages in order; missing source and destination |
 | `DualOutputTests` (11) | MP3 only (192 kbps, stereo, the title, the name); both from one job; both sharing the gain and trim (same length, both at −1 dBFS); mono, surround, 48 and 96 kHz sources; an MP3 from an MP3 refused unconfirmed, nothing written, then confirmed; one output failing (each way) keeping the other, both failing; any characters in the MP3's title; no title, no tag; cancelling with both; the source never replaced, not even by case; the MP3 rates |
-| `WindowLogicTests` (12) | preferences saved, loaded and tidied; the default folder; the "Saves as" names and the taken ones (the source never asked about); FFmpeg's progress read; the throttle; progress through a real two-output job; plain messages; 1.1: Loudness and its target kept (−16 to −8 LUFS), Off by default; 1.0's saved choices read (Normalise as Peak, the rest kept); an unreadable choice losing only itself; `normalise` still written for 1.0 |
+| `WindowLogicTests` (12) | preferences saved, loaded and tidied; the default folder; the "Saves as" names and the taken ones (the source never asked about); FFmpeg's progress read; the throttle; progress through a real two-output job; plain messages; 1.1: always Loudness to −16 LUFS (L10); choices saved by 1.0 and early 1.1 read (their Normalise, Level and targets ignored, the rest kept); an unreadable choice losing only itself; `normalise` and `target` still written for 1.0 |
 | `YouTubeTests` (12 + 1 live) | accepted and refused addresses (a playlist dropped); yt-dlp's errors sorted; progress lines; through a stand-in yt-dlp: the look-up and its arguments (no playlist, no cookies, the age workaround off, the address after "--"), a private video, a playlist refused, both outputs from one retrieval named after the video, an untitled job named after it, a retrieval error stopping the job, cancelling the download. The live test runs only when MMC_LIVE_YOUTUBE_URL is set |
 | `HardeningTests` (12) | stopping a tool stops its children; stopping a list stops them all; leftovers (old and ours only); awkward source names (a leading "-", `concat:`, quotes, emoji, backslash, a separate accent); long titles within the limits, and converting; a read-only folder; the folder and the source removed mid-job; a full disk (a 4 MB disk image): refused up front, and, with the estimate skipped, failing mid-write with no partial file; no tools found; yt-dlp's network timeout |
 | `SelfTestTests` (2) | the self-test passes with tools, and fails, saying why, without |
@@ -54,7 +54,7 @@ The window shows the engine's results; its logic is tested above
     tools/build-app.sh && open "build/MacMusic Converter Utility.app"
 
 1. **A song, both outputs:** choose (or drop) an MP3; Make: Both; type a
-   title; Level: Peak, and Trim on. Convert. Expect the re-encode question
+   title; Trim on. Convert. Expect the re-encode question
    (it's an MP3): Re-encode. The progress line names each stage, with a
    percentage. Results: two rows (✓), sizes, Show in Finder works.
 2. **Names already taken:** Convert the same again. Expect "... already
@@ -67,8 +67,8 @@ The window shows the engine's results; its logic is tested above
    "couldn't be read as audio"; Convert stays dimmed.
 6. **The folder:** Choose… another folder; Use Default goes back to
    ~/Music/MacMusic Converter.
-7. **Remembered:** quit and reopen: Make, Level, Trim, its seconds,
-   the target (Advanced) and the folder are as left; the source, title
+7. **Remembered:** quit and reopen: Make, Trim, its seconds
+   and the folder are as left; the source, title
    and file name are not.
 8. **YouTube:** paste a video's address (with a playlist in it too):
    Look Up shows its title, channel and length, and fills in the Title;
@@ -82,12 +82,11 @@ The window shows the engine's results; its logic is tested above
 10. **Closing mid-job:** the same with the window's close button.
 11. **Closing when idle:** the app quits; no question.
 12. **Licences:** Advanced, Licences… opens the notices.
-13. **Level (1.1):** Off, Peak and Loudness each change the line under
-   them (Peak names its dBFS, Loudness its LUFS); Advanced has "Peak to"
-   (−6 to 0 dBFS) and "Loudness to" (−16 to −8 LUFS). Convert a quiet
-   song with Loudness, Both: the result says "Levelled from … LUFS by …",
-   with what the limiter took off; each row shows its peak and LUFS.
-   A 1.0 user's Normalise comes back as Peak.
+13. **Loudness (1.1, L10):** Sound shows "Loudness −16 LUFS" and a line
+   saying every song is brought to it; there is no Level choice, and
+   Advanced has no targets. Convert a quiet song, Both: the result says
+   "Levelled from … LUFS by …", with what the limiter took off; each row
+   shows its peak and LUFS (−16, give or take a little).
 
 ## The self-test (P5)
 

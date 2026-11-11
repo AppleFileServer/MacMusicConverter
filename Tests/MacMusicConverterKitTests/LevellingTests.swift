@@ -19,6 +19,8 @@ import Testing
                                            reencodeConfirmed: true))
     }
 
+    let louder = ConversionOptions(levelling: .loudness, loudnessTarget: -12)
+
     /// Music-like noise: pink, with nothing above 8 kHz (the WAV keeps up
     /// to 11 kHz, so resampling takes nothing audible away), turned down
     /// by `dB`. At 0 dB it measures about −22 LUFS and peaks about −8 dBFS
@@ -35,7 +37,7 @@ import Testing
 
     /// The WAV's checks for every levelled output: near the target, the
     /// peak held, the length kept.
-    func expectLevelled(_ r: JobResult, target: Double = -12, _ where_: String = "") {
+    func expectLevelled(_ r: JobResult, target: Double = ConversionOptions.defaultLoudness, _ where_: String = "") {
         let wav = r.outputs[0]
         #expect(wav.succeeded, "\(where_): \(wav.problems)")
         #expect(wav.loudness != nil && abs(wav.loudness! - target) <= 1,
@@ -63,25 +65,33 @@ import Testing
 
     @Test func anotherTarget() async throws {
         let r = try await run(try await noise("target.wav", dB: -8),
-                              ConversionOptions(levelling: .loudness, loudnessTarget: -16))
-        expectLevelled(r, target: -16, "−16")
+                              ConversionOptions(levelling: .loudness, loudnessTarget: -12))
+        expectLevelled(r, target: -12, "−12")
     }
 
     /// Peaks over the ceiling after the gain are held by the limiter; a
     /// few dB of it is no cause for a warning.
+    /// (At −12 LUFS, for more limiting than −16 gives.)
     @Test func peaksAreLimited() async throws {
-        let r = try await run(try await bursts("peaky.wav", tone: 0.1, burst: 0.3))
+        let r = try await run(try await bursts("peaky.wav", tone: 0.1, burst: 0.3), louder)
         #expect(r.limited != nil && r.limited! > 1 && r.limited! < Limiter.warnAbove, "\(String(describing: r.limited))")
-        expectLevelled(r, "peaky")
+        expectLevelled(r, target: -12, "peaky")
         #expect(!r.outputs[0].warnings.contains { $0.contains("squashed") })
     }
 
     /// L7: much more, and the result says it may sound squashed.
     @Test func heavyLimitingIsWarnedAbout() async throws {
-        let r = try await run(try await bursts("spiky.wav", tone: 0.1, burst: 0.95))
+        let r = try await run(try await bursts("spiky.wav", tone: 0.1, burst: 0.95), louder)
         #expect(r.limited != nil && r.limited! > Limiter.warnAbove, "\(String(describing: r.limited))")
         #expect(r.outputs[0].warnings.contains { $0.contains("squashed") }, "\(r.outputs[0].warnings)")
         #expect(r.outputs[0].peak! <= ConversionOptions.ceiling + 0.5)
+    }
+
+    /// L10: every song is brought to −16 LUFS: the window's options.
+    @Test func theWindowsLevel() async throws {
+        let r = try await run(try await noise("window.wav", dB: -8), Preferences().options)
+        #expect(r.levelling == .loudness)
+        expectLevelled(r, target: -16, "window")
     }
 
     /// L4: the +20 dB cap holds, and missing the target then isn't warned
@@ -104,10 +114,11 @@ import Testing
     /// target and the same length.
     @Test func bothOutputsAreLevelled() async throws {
         let r = try await run(try await bursts("both.wav", tone: 0.1, burst: 0.3), outputs: .both)
-        expectLevelled(r, "both, WAV")
+        let target = ConversionOptions.defaultLoudness
+        expectLevelled(r, target: target, "both, WAV")
         let mp3 = r.outputs[1]
         #expect(mp3.kind == .mp3 && mp3.succeeded, "\(mp3.problems)")
-        #expect(mp3.loudness != nil && abs(mp3.loudness! - -12) <= 1, "\(String(describing: mp3.loudness))")
+        #expect(mp3.loudness != nil && abs(mp3.loudness! - target) <= 1, "\(String(describing: mp3.loudness))")
         #expect(abs((mp3.checked?.duration ?? 0) - r.analysis.duration) < 0.1)
     }
 

@@ -60,8 +60,9 @@ public struct ConversionOptions: Sendable, Equatable {
     public var trimSilence: Bool
     public var trimThreshold: Double
 
-    /// L3: the default loudness, chosen by the owner.
-    public static let defaultLoudness = -12.0
+    /// L3: the loudness every song is brought to, chosen by the owner
+    /// (−12 at first; −16 from L10, for evenness with little limiting).
+    public static let defaultLoudness = -16.0
     /// The limiter's ceiling (L5), in dBFS.
     public static let ceiling = -1.0
 

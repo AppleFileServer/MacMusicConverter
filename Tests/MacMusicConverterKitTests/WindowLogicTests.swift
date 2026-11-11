@@ -12,77 +12,59 @@ import Testing
         #expect(Preferences.load(from: defaults) == Preferences())
         var p = Preferences()
         p.selection = .both
-        p.normalise = true
-        p.target = -2
         p.trimSilence = true
         p.trimThreshold = 3
         p.folderPath = "/tmp/somewhere"
         p.save(to: defaults)
         #expect(Preferences.load(from: defaults) == p)
         #expect(Preferences.load(from: defaults).options
-                == ConversionOptions(normalise: true, target: -2, trimSilence: true, trimThreshold: 3))
+                == ConversionOptions(levelling: .loudness, loudnessTarget: -16, trimSilence: true, trimThreshold: 3))
     }
 
     @Test func preferencesAreTidied() throws {
         let defaults = try #require(UserDefaults(suiteName: "mmc-test-\(UUID().uuidString)"))
         var p = Preferences()
-        p.target = -40
         p.trimThreshold = 7
         p.save(to: defaults)
-        let back = Preferences.load(from: defaults)
-        #expect(back.target == -6 && back.trimThreshold == 3)
+        #expect(Preferences.load(from: defaults).trimThreshold == 3)
     }
 
-    /// 1.1 (L1, L3): Loudness and its target are kept; the target is kept
-    /// within −16 to −8 LUFS; Off by default.
-    @Test func loudnessPreferences() throws {
-        #expect(Preferences().levelling == .off && Preferences().loudnessTarget == -12)
-        let defaults = try #require(UserDefaults(suiteName: "mmc-test-\(UUID().uuidString)"))
-        var p = Preferences()
-        p.levelling = .loudness
-        p.loudnessTarget = -14
-        p.save(to: defaults)
-        let back = Preferences.load(from: defaults)
-        #expect(back == p)
-        #expect(back.options == ConversionOptions(levelling: .loudness, loudnessTarget: -14))
-        p.loudnessTarget = -30
-        p.save(to: defaults)
-        #expect(Preferences.load(from: defaults).loudnessTarget == -16)
-        p.loudnessTarget = 0
-        p.save(to: defaults)
-        #expect(Preferences.load(from: defaults).loudnessTarget == -8)
+    /// L10: there is no level to choose: every song is brought to −16 LUFS.
+    @Test func alwaysLoudness() {
+        let o = Preferences().options
+        #expect(o.levelling == .loudness && o.loudnessTarget == -16)
     }
 
-    /// 1.0's saved choices (no levelling) are read: Normalise ticked is
-    /// Peak, every other choice kept.
-    @Test func choicesSavedBy10AreRead() throws {
+    /// Choices saved by 1.0 and by early 1.1 builds are read; their
+    /// Normalise, Level and targets are ignored (L10).
+    @Test func earlierChoicesAreRead() throws {
         let defaults = try #require(UserDefaults(suiteName: "mmc-test-\(UUID().uuidString)"))
         let saved10 = #"{"outputs":"both","normalise":true,"target":-2,"trimSilence":true,"trimThreshold":3,"folderPath":"/tmp/x"}"#
         defaults.set(Data(saved10.utf8), forKey: Preferences.key)
-        let p = Preferences.load(from: defaults)
-        #expect(p.levelling == .peak && p.target == -2 && p.selection == .both)
-        #expect(p.trimSilence && p.trimThreshold == 3 && p.folderPath == "/tmp/x")
-        #expect(p.loudnessTarget == -12)
+        var p = Preferences.load(from: defaults)
+        #expect(p.selection == .both && p.trimSilence && p.trimThreshold == 3 && p.folderPath == "/tmp/x")
+        #expect(p.options.levelling == .loudness && p.options.loudnessTarget == -16)
 
-        defaults.set(Data(#"{"outputs":"mp3","normalise":false}"#.utf8), forKey: Preferences.key)
-        #expect(Preferences.load(from: defaults).levelling == .off)
+        let saved11 = #"{"outputs":"mp3","levelling":"off","loudnessTarget":-9,"normalise":false,"target":-1}"#
+        defaults.set(Data(saved11.utf8), forKey: Preferences.key)
+        p = Preferences.load(from: defaults)
+        #expect(p.selection == .mp3 && p.options.levelling == .loudness && p.options.loudnessTarget == -16)
     }
 
     /// A value that can't be read is left at its default; the rest are kept.
     @Test func anUnreadableChoiceLosesOnlyItself() throws {
         let defaults = try #require(UserDefaults(suiteName: "mmc-test-\(UUID().uuidString)"))
-        let saved = #"{"outputs":"both","levelling":"louder-still","target":-3}"#
+        let saved = #"{"outputs":"both","trimThreshold":"long","trimSilence":true}"#
         defaults.set(Data(saved.utf8), forKey: Preferences.key)
         let p = Preferences.load(from: defaults)
-        #expect(p.levelling == .off && p.selection == .both && p.target == -3)
+        #expect(p.trimThreshold == 2 && p.selection == .both && p.trimSilence)
     }
 
-    /// 1.0 can still read what 1.1 saves: `normalise` is still written.
-    @Test func normaliseIsStillWritten() throws {
-        var p = Preferences()
-        p.levelling = .peak
-        let json = try #require(String(data: try JSONEncoder().encode(p), encoding: .utf8))
-        #expect(json.contains(#""normalise":true"#))
+    /// 1.0 can still read what 1.1 saves: it needs `normalise` and
+    /// `target`, so they are written (Normalise off).
+    @Test func whatOnePointOhNeedsIsWritten() throws {
+        let json = try #require(String(data: try JSONEncoder().encode(Preferences()), encoding: .utf8))
+        #expect(json.contains(#""normalise":false"#) && json.contains(#""target":-1"#))
     }
 
     @Test func defaultFolder() {

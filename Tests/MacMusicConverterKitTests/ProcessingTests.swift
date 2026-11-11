@@ -118,7 +118,7 @@ import Testing
 
     @Test func optionsDefaultsAndNormalise() {
         #expect(ConversionOptions().levelling == .off)                    // L1: off by default
-        #expect(ConversionOptions().loudnessTarget == -12)                // L3
+        #expect(ConversionOptions().loudnessTarget == -16)                // L3, L10
         #expect(ConversionOptions(normalise: true).levelling == .peak)    // 1.0's name
         var o = ConversionOptions(levelling: .loudness)
         o.normalise = false

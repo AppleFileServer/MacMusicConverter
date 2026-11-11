@@ -1509,3 +1509,36 @@ Chapter 2, describes Normalise: a note for MacMusic's own sessions.
 - The window was built and the app's self-test passed; the window
   itself is the owner's to try (TESTING.md, "Trying the window", item 13), as no screenshots
   are taken without the owner asking.
+
+## 18.24 Version 1.1, Stage 4: the listening test, and L10 (2026-11-11, approved by the owner)
+
+- On the Plus's own speaker, with Off, Peak and Loudness (−12 LUFS)
+  versions of four songs, the owner heard little difference between the
+  three, though Loudness was louder. The Plus now plays through powered
+  mono speakers, which have their own volume, so loudness from the Plus
+  matters less than evenness.
+- **L10 (replaces L1's choice and L3's −12):** there is no level to
+  choose. Every conversion, WAV and MP3, is levelled by loudness to
+  **−16 LUFS**, with the limiter (L5). The window's Level picker and the
+  "Peak to" and "Loudness to" settings are gone; a line in Sound says
+  what is done. The engine keeps Off and Peak for the tests and
+  `mmc-convert` (`--normalise`, `--loudness [LUFS]`, default −16).
+  Choices saved by 1.0 and early 1.1 builds are read, their Normalise,
+  Level and targets ignored; `normalise` (false) and `target` (−1) are
+  still written, as 1.0 needs them to read the rest.
+- Why −16: the six songs of §18.22 would need up to 6.2 dB of limiting
+  at −12, and at most 2.2 dB at −16 (four of them none). Converted to
+  −16 they measured −16.0 to −16.1 LUFS:
+
+  | Song | Source | Gain | Limiter, up to | WAV peak |
+  |---|---|---|---|---|
+  | Dusty Springfield | −19.7 LUFS | +3.7 dB | 2.2 dB | −1.0 dBFS |
+  | Blondie | −16.7 | +0.7 | 0.8 | −0.9 |
+  | No Na | −16.2 | +0.2 | 0 | −2.1 |
+  | CHUU | −15.2 | −0.8 | 0 | −3.0 |
+  | The Kinks | −15.1 | −0.9 | 0 | −1.9 |
+  | Die Spitz | −11.0 | −5.0 | 0 | −3.7 |
+
+- The second listening test ("HD50_512 Even Test.hda": albums "Before",
+  the six songs as they were, and "Levelled", at −16) is the owner's to
+  try on the speakers. Stage 5 follows it.

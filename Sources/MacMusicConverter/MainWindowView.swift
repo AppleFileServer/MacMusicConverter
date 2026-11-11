@@ -177,15 +177,13 @@ struct MainWindowView: View {
 
     var soundSection: some View {
         Section("Sound") {
-            Picker(selection: $model.prefs.levelling) {
-                Text("Off").tag(Levelling.off)
-                Text("Peak").tag(Levelling.peak)
-                Text("Loudness").tag(Levelling.loudness)
+            LabeledContent {
+                Text(String(format: "%.0f LUFS", ConversionOptions.defaultLoudness)).monospacedDigit()
             } label: {
-                Text("Level")
-                Text(levellingHelp)
+                Text("Loudness")
+                Text(String(format: "Every song is brought to the same loudness, so they all sound equally loud. A limiter keeps the loudest moments under %.0f dBFS.",
+                            ConversionOptions.ceiling))
             }
-            .pickerStyle(.segmented)
             Toggle(isOn: $model.prefs.trimSilence) {
                 Text("Trim silence at the ends")
                 Text("Silence longer than this at the start or end is cut to half a second. The middle is never touched.")
@@ -195,20 +193,6 @@ struct MainWindowView: View {
                 Text("3 seconds").tag(3.0)
             }
             .disabled(!model.prefs.trimSilence)
-        }
-    }
-
-    /// What the Level choice does (L1).
-    var levellingHelp: String {
-        switch model.prefs.levelling {
-        case .off:
-            "The sound is left as it is."
-        case .peak:
-            String(format: "Raise or lower the loudest peak to %.1f dBFS. Songs may still sound different in loudness.",
-                   model.prefs.target)
-        case .loudness:
-            String(format: "Bring every song to %.0f LUFS, so they sound equally loud, and louder on the Macintosh. A limiter keeps the loudest moments under %.0f dBFS.",
-                   model.prefs.loudnessTarget, ConversionOptions.ceiling)
         }
     }
 
@@ -232,16 +216,6 @@ struct MainWindowView: View {
     var advancedSection: some View {
         Section {
             DisclosureGroup("Advanced", isExpanded: $showAdvanced) {
-                LabeledContent("Peak to") {
-                    Stepper(value: $model.prefs.target, in: -6...0, step: 0.5) {
-                        Text(String(format: "%.1f dBFS", model.prefs.target)).monospacedDigit()
-                    }
-                }
-                LabeledContent("Loudness to") {
-                    Stepper(value: $model.prefs.loudnessTarget, in: -16...(-8), step: 1) {
-                        Text(String(format: "%.0f LUFS", model.prefs.loudnessTarget)).monospacedDigit()
-                    }
-                }
                 LabeledContent("MacMusic WAV", value: "22,050 Hz · mono · 8-bit (fixed: what MacMusic plays)")
                 LabeledContent("MP3") {
                     VStack(alignment: .trailing, spacing: 2) {

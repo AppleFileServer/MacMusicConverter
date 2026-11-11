@@ -16,6 +16,11 @@
   Advanced; the result says where the song was levelled from and what
   the limiter took off, and each output its loudness. 1.0's saved
   choices are read (Normalise as Peak).
+- Stage 4, after the owner's listening test (§18.24, L10): no level to
+  choose. Every song is levelled by loudness to −16 LUFS (was −12, and a
+  choice), so all songs sound equally loud with little limiting. Level,
+  "Peak to" and "Loudness to" are gone from the window; earlier saved
+  choices are read, their level settings ignored.
 
 ## 1.0 (2026-10-09)
 
