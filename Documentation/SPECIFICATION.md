@@ -1558,18 +1558,23 @@ now made at the Plus's own rate.
   MP3s are unchanged.
 - **K2, MacMusic first:** MacMusic 1.1 accepts only 22,050 Hz, at import
   (`src/wav.c`) and in its song files (`src/songfile.c`), and times its
-  songs at 22,050 (`src/playback.c`). MacMusic 1.1.1 is to accept 22,254
+  songs at 22,050 (`src/playback.c`). MacMusic 1.2 is to accept 22,254
   as well, with times from each song's own rate; done in MacMusic's own
   sessions, not from here.
 - **K3, the Transfer Utility:** its check of MacMusic WAVs must accept
   22,254 too; done in its own sessions.
 - **K4, the release:** Converter 1.1 is released only after MacMusic
-  1.1.1.
+  1.2.
 - **K5, old songs:** songs already made at 22,050 keep working in
-  MacMusic 1.1.1, still 0.9% fast, until converted again.
+  MacMusic 1.2, still 0.9% fast, until converted again.
 - **K6, the check on the Plus:** a new song lasts exactly as long as
   MacMusic's timer and a stopwatch say, over a whole song.
 
 Findings: "Sunny Afternoon" (The Kinks) converted at 22,254 Hz lasts
 212.741 s against the source's 212.754 s (the MP3's own padding); the
 loudness, −16.0 LUFS, and peak are as at 22,050. The tests (129) pass.
+
+(2026-11-11: the owner named MacMusic's release **1.2**, not 1.1.1, as
+accepting the new rate changes MacMusic's song-file rules and its cache
+version, which its release rules keep out of a point release; K2, K4 and
+K5 say 1.2.)

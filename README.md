@@ -2,7 +2,7 @@
 
 A macOS app for the MacMusic project: it turns music into the WAV files
 the MacMusic player imports on a Macintosh Plus (mono, 22,254 samples a
-second, the Plus's own rate, 8-bit; MacMusic 1.1.1 or later), and optionally into MP3s.
+second, the Plus's own rate, 8-bit; MacMusic 1.2 or later), and optionally into MP3s.
 
 **Status: version 1.0 (Stage 7).** Earlier: **Stage 2 done** (`Documentation/SPECIFICATION.md` §14): the
 shared engine converts local files to MacMusic WAVs, optionally

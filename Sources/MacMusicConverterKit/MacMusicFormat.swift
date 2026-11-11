@@ -5,7 +5,7 @@
 /// From 1.1 (§18.25, K1) the rate is the Plus's own, 22,254 Hz (the
 /// hardware's 22,254.5 to the whole number a WAV can hold), so songs play
 /// at their true speed and pitch (MacMusic's issue I4). MacMusic 1.1
-/// imports only 22,050 Hz; these files need MacMusic 1.1.1 (K2).
+/// imports only 22,050 Hz; these files need MacMusic 1.2 (K2).
 public enum MacMusicFormat {
     /// WAVE format tag 1: plain linear PCM. Extensible (0xFFFE) is refused.
     public static let formatTag: UInt16 = 1
