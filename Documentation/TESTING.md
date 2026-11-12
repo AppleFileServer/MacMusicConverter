@@ -120,6 +120,22 @@ On the release's app, unzipped and dragged to Applications:
 Optional, when you next use the Plus: steps 2-3 on the real Macintosh
 Plus (outstanding since Stage 1).
 
+### The 1.1 acceptance run (2026-11-12)
+
+On a build of commit 45c037b, the code of 1.1 before its version was set
+(70aa319 changes only the version, the changelog and the release notes),
+built with `tools/build-app.sh` outside the repository and opened by
+Claude; the owner's checks: "checks done, please release". Counted as
+the acceptance run by the owner's choice, instead of a run on the
+release's own app. Recorded as given; the steps weren't reported one by
+one. Checked by the release script on the release itself
+(`~/MacPlusProjects/releases/MacMusic-Converter-Utility-1.1/`): 129
+tests, and the self-test on a copy outside the repository with the app's
+own tools. The WAVs were also checked in MacMusic: the 1.2 candidate
+imported and played 22,254 Hz test WAVs in Mini vMac (MacMusic
+4a83e0b), and its Music disk's 376 songs were made with this engine
+(`mmc-convert`).
+
 ### The 1.0 acceptance run (2026-10-09)
 
 On the release candidate made from commit 87879f4
