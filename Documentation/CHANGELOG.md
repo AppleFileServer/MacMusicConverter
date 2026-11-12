@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1 (in development)
+## 1.1 (2026-11-12)
 
 - Stage 1, the loudness meter (SPECIFICATION.md §18.20, L2): every
   source's loudness is measured, by ITU-R BS.1770-4 / EBU R128, on the
@@ -25,6 +25,11 @@
   22,254 Hz, not 22,050, so songs play at their true speed and pitch on
   the Plus (MacMusic's issue I4: 0.9% fast). They need MacMusic 1.2,
   which is to accept the new rate; MacMusic 1.1 refuses them.
+- Released 2026-11-12 by the owner's choice ahead of MacMusic 1.2, which
+  is built (its candidate plays these WAVs) but awaits its checks on the
+  real Plus. Until it's released, the WAVs need the MacMusic 1.2
+  candidate, and the Transfer Utility 2.0 (unreleased; 1.0 takes only
+  22,050 Hz).
 
 ## 1.0 (2026-10-09)
 
